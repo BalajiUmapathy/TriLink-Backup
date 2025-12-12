@@ -1,67 +1,70 @@
-using AutoMapper;
-using Backend.Models.DTO;
-using Backend.Repositories;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using TriLink.DTOs;
+using TriLink.Services;
 
 namespace Backend.Controllers
 {
-    [Route("api/[controller]")]
     [ApiController]
-    [Authorize(Roles = "Logistics")]
+    [Route("api/[controller]")]
     public class LogisticsController : ControllerBase
     {
-        private readonly ILogisticsRepository _logisticsRepository;
-        private readonly IMapper _mapper;
+        private readonly IRouteService _routeService;
+        private readonly IAIService _aiService;
+        private readonly ILogger<LogisticsController> _logger;
 
-        public LogisticsController(ILogisticsRepository logisticsRepository, IMapper mapper)
+        public LogisticsController(IRouteService routeService, IAIService aiService, ILogger<LogisticsController> logger)
         {
-            _logisticsRepository = logisticsRepository;
-            _mapper = mapper;
+            _routeService = routeService;
+            _aiService = aiService;
+            _logger = logger;
         }
 
-        [HttpGet]
-        public async Task<IActionResult> GetOpenRequests()
+        [HttpPost("suggest-route")]
+        public async Task<ActionResult<RouteResponseDto>> SuggestRoute([FromBody] RouteRequestDto request)
         {
-            var requests = await _logisticsRepository.GetAllAsync("Open");
-            return Ok(_mapper.Map<List<LogisticsDto>>(requests));
-        }
-
-        [HttpPut("{id:Guid}/assign")]
-        public async Task<IActionResult> AssignRequest([FromRoute] Guid id)
-        {
-            var request = await _logisticsRepository.GetByIdAsync(id);
-            if (request == null) return NotFound();
-
-            if (request.Status != "Open")
+            if (string.IsNullOrEmpty(request.Origin) || string.IsNullOrEmpty(request.Destination))
             {
-                return BadRequest("Request is not open");
+                return BadRequest("Origin and Destination are required.");
             }
 
-            var providerId = Guid.Parse(User.Claims.First(c => c.Type == "id").Value);
+            _logger.LogInformation($"Getting route for {request.Origin} to {request.Destination}");
 
-            request.ProviderId = providerId;
-            request.Status = "Assigned";
-            
-            await _logisticsRepository.UpdateAsync(id, request);
+            // 1. Geocode Origin and Destination
+            var originCoords = await _routeService.GeocodeAsync(request.Origin);
+            var destCoords = await _routeService.GeocodeAsync(request.Destination);
 
-            return Ok(_mapper.Map<LogisticsDto>(request));
-        }
-        
-        // Maybe method to update status to "InTransit", "Delivered"
-         [HttpPut("{id:Guid}/status")]
-        public async Task<IActionResult> UpdateStatus([FromRoute] Guid id, [FromBody] string status) // Simple body
-        {
-             var request = await _logisticsRepository.GetByIdAsync(id);
-            if (request == null) return NotFound();
-            
-             var providerId = Guid.Parse(User.Claims.First(c => c.Type == "id").Value);
-             if (request.ProviderId != providerId) return Forbid();
+            if (originCoords == null || destCoords == null)
+            {
+                return NotFound("Could not find coordinates for one or both locations.");
+            }
 
-             request.Status = status;
-             await _logisticsRepository.UpdateAsync(id, request);
-             
-             return Ok(_mapper.Map<LogisticsDto>(request));
+            // 2. Get Route from OSRM
+            var route = await _routeService.GetRouteAsync(
+                originCoords.Value.lat, originCoords.Value.lon,
+                destCoords.Value.lat, destCoords.Value.lon);
+
+            if (route == null)
+            {
+                return StatusCode(500, "Could not calculate route.");
+            }
+
+            // 3. Get AI Suggestions (includes calculated Fuel Cost based on vehicle)
+            var (experience, vehicle, fuelCost) = _aiService.GetSuggestions(request.Origin, request.Destination, route.Value.distanceKm);
+
+            // 4. Construct Response
+            var response = new RouteResponseDto
+            {
+                Distance = $"{route.Value.distanceKm:F0} km",
+                Duration = $"{route.Value.durationHours:F0} hr",
+                FuelCost = $"₹{fuelCost:F0}",
+                DriverExperience = experience,
+                VehicleType = vehicle,
+                RouteGeometry = route.Value.geometry ?? "",
+                OriginCoords = new double[] { originCoords.Value.lat, originCoords.Value.lon },
+                DestinationCoords = new double[] { destCoords.Value.lat, destCoords.Value.lon }
+            };
+
+            return Ok(response);
         }
     }
 }

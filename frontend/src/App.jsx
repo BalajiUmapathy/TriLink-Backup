@@ -71,7 +71,7 @@ function App() {
         <Route path="/logistics/dashboard" element={<LogisticsDashboard />} /> {/* Fallback */}
         <Route path="/logistics/available-jobs/:userId" element={<AvailableJobs />} />
         <Route path="/logistics/assigned-jobs/:userId" element={<AssignedJobs />} />
-        <Route path="/logistics/route-suggestion/:id/:userId" element={<RouteSuggestion />} />
+        <Route path="/logistics/route-suggestion/:userId/:id" element={<RouteSuggestion />} />
         <Route path="/logistics/route-summary/:userId" element={<RouteSummary />} />
         <Route path="/logistics/invoice/:userId" element={<LogisticsInvoice />} />
         <Route path="/logistics/profile/:userId" element={<LogisticsProfile />} />

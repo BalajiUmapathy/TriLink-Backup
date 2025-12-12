@@ -1,21 +1,36 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Bell, User, Map, Truck, Clock, Leaf } from 'lucide-react';
+import { MapContainer, TileLayer, Polyline, Marker } from 'react-leaflet';
+import 'leaflet/dist/leaflet.css';
+import polyline from '@mapbox/polyline';
+import L from 'leaflet';
 import '../../index.css';
+
+// Fix for default marker icon
+delete L.Icon.Default.prototype._getIconUrl;
+
+L.Icon.Default.mergeOptions({
+    iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
+    iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
+    shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+});
 
 const RouteSummary = () => {
     const navigate = useNavigate();
+    const location = useLocation();
+    const { jobData, suggestedRouteData } = location.state || {};
 
     const handleAccept = () => {
         const newJob = {
-            id: 'JOB-' + Math.floor(Math.random() * 10000), // Generate a random ID for now
+            id: jobData?.id || 'JOB-' + Math.floor(Math.random() * 10000),
             origin: 'Coimbatore',
             destination: 'Delhi',
-            distance: '2122 km',
-            eta: '32 hours',
-            fuelCost: '₹50432',
-            driverExp: '5+ Years',
-            vehicleType: 'Heavy Truck',
+            distance: suggestedRouteData?.distance || '2122 km',
+            eta: suggestedRouteData?.duration || '32 hours',
+            fuelCost: suggestedRouteData?.fuelCost || '₹50432',
+            driverExp: suggestedRouteData?.driverExperience || 'Mountain Terrain Specialist',
+            vehicleType: suggestedRouteData?.vehicleType || 'Heavy Duty Truck',
             status: 'Accepted',
             date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
         };
@@ -24,8 +39,7 @@ const RouteSummary = () => {
         const updatedHistory = [newJob, ...existingHistory];
         localStorage.setItem('jobHistory', JSON.stringify(updatedHistory));
 
-        const userId = localStorage.getItem('userId');
-        navigate(`/logistics/dashboard/${userId}`);
+        navigate('/logistics/dashboard');
     };
 
     return (
@@ -42,7 +56,7 @@ const RouteSummary = () => {
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
                     <Bell size={20} color="var(--text-muted)" />
-                    <div style={{ width: '32px', height: '32px', background: '#e2e8f0', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={() => { const userId = localStorage.getItem('userId'); navigate(`/logistics/profile/${userId}`); }}>
+                    <div style={{ width: '32px', height: '32px', background: '#e2e8f0', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                         <User size={18} color="var(--text-muted)" />
                     </div>
                 </div>
@@ -53,9 +67,47 @@ const RouteSummary = () => {
 
                 <div className="card" style={{ padding: '0', overflow: 'hidden' }}>
                     {/* Map Preview */}
-                    <div style={{ height: '300px', background: '#f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column' }}>
-                        <Map size={64} color="#cbd5e1" />
-                        <span style={{ marginTop: '1rem', color: '#94a3b8', fontWeight: '500' }}>Interactive Map Preview</span>
+                    {/* Map Preview */}
+                    <div style={{ height: '300px', background: '#f1f5f9', display: 'block' }}>
+                        {(() => {
+                            let positions = [];
+                            let isFallback = false;
+                            const routeGeometry = suggestedRouteData?.routeGeometry;
+                            const originCoords = suggestedRouteData?.originCoords;
+                            const destinationCoords = suggestedRouteData?.destinationCoords;
+
+                            if (routeGeometry) {
+                                try {
+                                    positions = polyline.decode(routeGeometry);
+                                } catch (e) {
+                                    console.error("Error decoding polyline", e);
+                                }
+                            } else if (originCoords && destinationCoords) {
+                                positions = [originCoords, destinationCoords];
+                                isFallback = true;
+                            }
+
+                            if (positions.length > 0) {
+                                return (
+                                    <MapContainer center={positions[0]} zoom={6} scrollWheelZoom={false} style={{ height: '100%', width: '100%' }}>
+                                        <TileLayer
+                                            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                                            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                                        />
+                                        <Polyline positions={positions} color={isFallback ? "#94a3b8" : "#2563eb"} dashArray={isFallback ? "5, 10" : null} />
+                                        {isFallback && originCoords && <Marker position={originCoords}></Marker>}
+                                        {isFallback && destinationCoords && <Marker position={destinationCoords}></Marker>}
+                                    </MapContainer>
+                                );
+                            } else {
+                                return (
+                                    <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column' }}>
+                                        <Map size={64} color="#cbd5e1" />
+                                        <span style={{ marginTop: '1rem', color: '#94a3b8', fontWeight: '500' }}>No map data available</span>
+                                    </div>
+                                );
+                            }
+                        })()}
                     </div>
 
                     <div style={{ padding: '2rem' }}>
@@ -66,11 +118,11 @@ const RouteSummary = () => {
 
                         {/* Stats List */}
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginBottom: '2rem' }}>
-                            <StatBar icon={<Map size={20} />} label="Distance" value="2122 km" />
-                            <StatBar icon={<Clock size={20} />} label="ETA" value="32 hours" />
-                            <StatBar icon={<Truck size={20} />} label="Fuel Cost" value="₹50432" />
-                            <StatBar icon={<User size={20} />} label="Driver Exp." value="5+ Years" />
-                            <StatBar icon={<Truck size={20} />} label="Vehicle Type" value="Heavy Truck" />
+                            <StatBar icon={<Map size={20} />} label="Distance" value={suggestedRouteData?.distance || "2122 km"} />
+                            <StatBar icon={<Clock size={20} />} label="ETA" value={suggestedRouteData?.duration || "32 hours"} />
+                            <StatBar icon={<Truck size={20} />} label="Fuel Cost" value={suggestedRouteData?.fuelCost || "₹50432"} />
+                            <StatBar icon={<User size={20} />} label="Driver Exp." value={suggestedRouteData?.driverExperience || "Mountain Terrain Specialist"} />
+                            <StatBar icon={<Truck size={20} />} label="Vehicle Type" value={suggestedRouteData?.vehicleType || "Heavy Duty Truck"} />
                         </div>
 
                         {/* Waypoints */}

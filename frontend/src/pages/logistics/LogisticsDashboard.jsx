@@ -65,7 +65,7 @@ const LogisticsDashboard = () => {
                         <div
                             key={index}
                             className="card"
-                            onClick={() => { const userId = localStorage.getItem('userId'); stat.route && navigate(`${stat.route}/${userId}`, { state: stat.state }); }}
+                            onClick={() => stat.route && navigate(stat.route, { state: stat.state })}
                             style={{ padding: '1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: stat.route ? 'pointer' : 'default' }}
                         >
                             <div>
@@ -91,6 +91,8 @@ const LogisticsDashboard = () => {
                                         <th style={{ padding: '1rem 1.5rem', textAlign: 'left', fontSize: '0.85rem', color: 'var(--text-muted)', fontWeight: '600' }}>Route</th>
                                         <th style={{ padding: '1rem 1.5rem', textAlign: 'left', fontSize: '0.85rem', color: 'var(--text-muted)', fontWeight: '600' }}>Status</th>
                                         <th style={{ padding: '1rem 1.5rem', textAlign: 'left', fontSize: '0.85rem', color: 'var(--text-muted)', fontWeight: '600' }}>Date Accepted</th>
+                                        <th style={{ padding: '1rem 1.5rem', textAlign: 'left', fontSize: '0.85rem', color: 'var(--text-muted)', fontWeight: '600' }}>Driver Experience</th>
+                                        <th style={{ padding: '1rem 1.5rem', textAlign: 'left', fontSize: '0.85rem', color: 'var(--text-muted)', fontWeight: '600' }}>Vehicle Recommended</th>
                                         <th style={{ padding: '1rem 1.5rem', textAlign: 'right', fontSize: '0.85rem', color: 'var(--text-muted)', fontWeight: '600' }}>Distance</th>
                                     </tr>
                                 </thead>
@@ -108,6 +110,8 @@ const LogisticsDashboard = () => {
                                                 </span>
                                             </td>
                                             <td style={{ padding: '1rem 1.5rem', color: 'var(--text-muted)' }}>{job.date}</td>
+                                            <td style={{ padding: '1rem 1.5rem', color: 'var(--text-muted)' }}>{job.driverExp || '-'}</td>
+                                            <td style={{ padding: '1rem 1.5rem', color: 'var(--text-muted)' }}>{job.vehicleType || '-'}</td>
                                             <td style={{ padding: '1rem 1.5rem', textAlign: 'right', color: 'var(--text-muted)' }}>{job.distance}</td>
                                         </tr>
                                     ))}

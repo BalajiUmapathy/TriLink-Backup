@@ -125,7 +125,8 @@ const LogisticsProfile = () => {
 
     const handleLogout = () => {
         if (confirm('Are you sure you want to logout?')) {
-            localStorage.clear();
+            localStorage.removeItem('token');
+            localStorage.removeItem('role');
             navigate('/');
         }
     };
@@ -153,7 +154,7 @@ const LogisticsProfile = () => {
                     <Bell size={20} color="var(--text-muted)" />
                     <div
                         style={{ width: '32px', height: '32px', background: '#eff6ff', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', border: '1px solid var(--primary)' }}
-                        onClick={() => { const userId = localStorage.getItem('userId'); navigate(`/logistics/profile/${userId}`); }}
+                        onClick={() => navigate('/logistics/profile')}
                     >
                         <User size={18} color="var(--primary)" />
                     </div>

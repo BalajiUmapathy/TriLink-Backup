@@ -9,7 +9,8 @@ const LogisticsInvoice = () => {
 
     const handleSend = () => {
         setSent(true);
-        setTimeout(() => { const userId = localStorage.getItem('userId'); navigate(`/logistics/dashboard/${userId}`); }, 2000);
+        const userId = localStorage.getItem('userId');
+        setTimeout(() => navigate(`/logistics/dashboard/${userId}`), 2000);
     };
 
     return (
@@ -21,7 +22,7 @@ const LogisticsInvoice = () => {
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
                     <Bell size={20} color="var(--text-muted)" />
-                    <div style={{ width: '32px', height: '32px', background: '#e2e8f0', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={() => { const userId = localStorage.getItem('userId'); navigate(`/logistics/profile/${userId}`); }}>
+                    <div style={{ width: '32px', height: '32px', background: '#e2e8f0', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                         <User size={18} color="var(--text-muted)" />
                     </div>
                 </div>

@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using Microsoft.OpenApi.Models;
+using TriLink.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -59,6 +60,11 @@ builder.Services.AddScoped<INegotiationRepository, NegotiationRepository>();
 builder.Services.AddScoped<ILogisticsRepository, LogisticsRepository>();
 builder.Services.AddScoped<IOrderRepository, OrderRepository>();
 builder.Services.AddScoped<ITokenRepository, TokenRepository>();
+
+// Register services for logistics route planning
+builder.Services.AddScoped<IRouteService, RouteService>();
+builder.Services.AddScoped<IAIService, AIService>();
+builder.Services.AddHttpClient(); // Required for RouteService to make HTTP calls
 
 builder.Services.AddAutoMapper(typeof(AutoMapperProfile));
 

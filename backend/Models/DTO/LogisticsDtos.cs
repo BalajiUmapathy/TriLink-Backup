@@ -1,24 +1,43 @@
-namespace Backend.Models.DTO
+using System.ComponentModel.DataAnnotations;
+
+namespace TriLink.DTOs
 {
-    public class LogisticsDto
+    public class CreateLogisticsJobDto
     {
-        public Guid Id { get; set; }
-        public Guid OrderId { get; set; }
-        public string ProductName { get; set; }
-        public Guid? ProviderId { get; set; }
-        public string ProviderName { get; set; }
-        public string PickupLocation { get; set; }
-        public string DropLocation { get; set; }
-        public double EstimatedDistanceKm { get; set; }
-        public decimal ProposedCost { get; set; }
-        public string Status { get; set; }
+        public Guid ? OrderId { get; set; }
+
+        [Required]
+        public string PickupAddressLine1 { get; set; } = null!;
+        public string? PickupAddressLine2 { get; set; }
+        [Required]
+        public string PickupCity { get; set; } = null!;
+        [Required]
+        public string PickupState { get; set; } = null!;
+        [Required]
+        public string PickupPincode { get; set; } = null!;
+
+        [Required]
+        public string DropAddressLine1 { get; set; } = null!;
+        public string? DropAddressLine2 { get; set; }
+        [Required]
+        public string DropCity { get; set; } = null!;
+        [Required]
+        public string DropState { get; set; } = null!;
+        [Required]
+        public string DropPincode { get; set; } = null!;
+
+        public decimal EstimatedWeightKg { get; set; }
+        public string Status { get; set; } = "Active";
     }
 
-    public class CreateLogisticsDto
+    public class LogisticsJobDto
     {
-        public Guid OrderId { get; set; }
-        public string PickupLocation { get; set; }
-        public string DropLocation { get; set; }
-        public double EstimatedDistanceKm { get; set; }
+        public Guid Id { get; set; }
+        public Guid? OrderId { get; set; }
+        public string PickupLocation { get; set; } = null!; // City, State
+        public string DropLocation { get; set; } = null!;   // City, State
+        public decimal EstimatedWeightKg { get; set; }
+        public string Status { get; set; } = null!;
+        public DateTime CreatedAt { get; set; }
     }
 }

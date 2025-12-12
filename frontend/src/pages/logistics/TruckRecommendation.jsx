@@ -54,7 +54,7 @@ const TruckRecommendation = () => {
     const handleContinue = () => {
         if (selectedTruck) {
             const userId = localStorage.getItem('userId');
-            navigate(`/logistics/driver-matching/${id}/${userId}`);
+            navigate(`/logistics/driver-matching/${userId}/${id}`);
         }
     };
 
