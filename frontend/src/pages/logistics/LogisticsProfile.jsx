@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { Truck, FileText, CheckCircle, Bell, User, Edit2, Save, X, LogOut, Download } from 'lucide-react';
 import '../../index.css';
 
 const LogisticsProfile = () => {
     const navigate = useNavigate();
+    const { userId } = useParams();
     const [isEditing, setIsEditing] = useState(false);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
@@ -125,7 +126,8 @@ const LogisticsProfile = () => {
 
     const handleLogout = () => {
         if (confirm('Are you sure you want to logout?')) {
-            localStorage.clear();
+            localStorage.removeItem('token');
+            localStorage.removeItem('role');
             navigate('/');
         }
     };
@@ -142,18 +144,18 @@ const LogisticsProfile = () => {
             {/* Navigation Bar */}
             <header style={{ background: 'white', borderBottom: '1px solid var(--border)', padding: '1rem 3rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '3rem' }}>
-                    <div style={{ fontSize: '1.5rem', fontWeight: '700', color: 'var(--text-main)', cursor: 'pointer' }} onClick={() => { const userId = localStorage.getItem('userId'); navigate(`/logistics/dashboard/${userId}`); }}>TriLink</div>
+                    <div style={{ fontSize: '1.5rem', fontWeight: '700', color: 'var(--text-main)', cursor: 'pointer' }} onClick={() => navigate(`/logistics/dashboard/${userId}`)}>TriLink</div>
                     <div style={{ display: 'flex', gap: '2rem', fontSize: '0.95rem', fontWeight: '500' }}>
-                        <a href="#" onClick={() => { const userId = localStorage.getItem('userId'); navigate(`/logistics/dashboard/${userId}`); }} style={{ color: 'var(--text-muted)', cursor: 'pointer' }}>Dashboard</a>
-                        <a href="#" onClick={() => { const userId = localStorage.getItem('userId'); navigate(`/logistics/available-jobs/${userId}`); }} style={{ color: 'var(--text-muted)', cursor: 'pointer' }}>Search Jobs</a>
-                        <a href="#" onClick={() => { const userId = localStorage.getItem('userId'); navigate(`/logistics/assigned-jobs/${userId}`); }} style={{ color: 'var(--text-muted)', cursor: 'pointer' }}>Assigned Jobs</a>
+                        <a href="#" onClick={() => navigate(`/logistics/dashboard/${userId}`)} style={{ color: 'var(--text-muted)', cursor: 'pointer' }}>Dashboard</a>
+                        <a href="#" onClick={() => navigate(`/logistics/available-jobs/${userId}`)} style={{ color: 'var(--text-muted)', cursor: 'pointer' }}>Search Jobs</a>
+                        <a href="#" onClick={() => navigate(`/logistics/assigned-jobs/${userId}`)} style={{ color: 'var(--text-muted)', cursor: 'pointer' }}>Assigned Jobs</a>
                     </div>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
                     <Bell size={20} color="var(--text-muted)" />
                     <div
                         style={{ width: '32px', height: '32px', background: '#eff6ff', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', border: '1px solid var(--primary)' }}
-                        onClick={() => { const userId = localStorage.getItem('userId'); navigate(`/logistics/profile/${userId}`); }}
+                        onClick={() => navigate(`/logistics/profile/${userId}`)}
                     >
                         <User size={18} color="var(--primary)" />
                     </div>

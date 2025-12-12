@@ -1,6 +1,7 @@
 using Backend.Data;
 using Backend.Mappings;
 using Backend.Repositories;
+using Backend.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
@@ -59,6 +60,9 @@ builder.Services.AddScoped<INegotiationRepository, NegotiationRepository>();
 builder.Services.AddScoped<ILogisticsRepository, LogisticsRepository>();
 builder.Services.AddScoped<IOrderRepository, OrderRepository>();
 builder.Services.AddScoped<ITokenRepository, TokenRepository>();
+
+builder.Services.AddHttpClient<IRouteService, RouteService>();
+builder.Services.AddScoped<IAIService, AIService>();
 
 builder.Services.AddAutoMapper(typeof(AutoMapperProfile));
 

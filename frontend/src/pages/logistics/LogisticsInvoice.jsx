@@ -1,15 +1,16 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { Bell, User, Download, Printer, Share2, CheckCircle } from 'lucide-react';
 import '../../index.css';
 
 const LogisticsInvoice = () => {
     const navigate = useNavigate();
+    const { userId } = useParams();
     const [sent, setSent] = useState(false);
 
     const handleSend = () => {
         setSent(true);
-        setTimeout(() => { const userId = localStorage.getItem('userId'); navigate(`/logistics/dashboard/${userId}`); }, 2000);
+        setTimeout(() => navigate(`/logistics/dashboard/${userId}`), 2000);
     };
 
     return (
@@ -17,11 +18,11 @@ const LogisticsInvoice = () => {
             {/* Header */}
             <header style={{ background: 'white', borderBottom: '1px solid var(--border)', padding: '1rem 3rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '3rem' }}>
-                    <div style={{ fontSize: '1.5rem', fontWeight: '700', color: 'var(--text-main)', cursor: 'pointer' }} onClick={() => { const userId = localStorage.getItem('userId'); navigate(`/logistics/dashboard/${userId}`); }}>TriLink</div>
+                    <div style={{ fontSize: '1.5rem', fontWeight: '700', color: 'var(--text-main)', cursor: 'pointer' }} onClick={() => navigate(`/logistics/dashboard/${userId}`)}>TriLink</div>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
                     <Bell size={20} color="var(--text-muted)" />
-                    <div style={{ width: '32px', height: '32px', background: '#e2e8f0', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={() => { const userId = localStorage.getItem('userId'); navigate(`/logistics/profile/${userId}`); }}>
+                    <div style={{ width: '32px', height: '32px', background: '#e2e8f0', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                         <User size={18} color="var(--text-muted)" />
                     </div>
                 </div>

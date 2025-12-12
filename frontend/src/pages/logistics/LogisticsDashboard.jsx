@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { Truck, FileText, CheckCircle, Clock, Bell, User } from 'lucide-react';
 import '../../index.css';
 
 const LogisticsDashboard = () => {
     const navigate = useNavigate();
+    const { userId } = useParams();
     const [selectedJob, setSelectedJob] = useState('JOB-001');
     const [jobHistory, setJobHistory] = useState([]);
 
@@ -25,9 +26,9 @@ const LogisticsDashboard = () => {
     }, []);
 
     const stats = [
-        { label: 'Available Jobs', value: availableJobsCount, icon: <Truck size={24} />, route: '/logistics/available-jobs' },
-        { label: 'Assigned Jobs', value: assignedJobsCount, icon: <CheckCircle size={24} />, route: '/logistics/assigned-jobs' },
-        { label: 'Quotes Submitted', value: quotesSubmittedCount, icon: <FileText size={24} />, route: '/logistics/available-jobs', state: { filter: 'Quoted' } },
+        { label: 'Available Jobs', value: availableJobsCount, icon: <Truck size={24} />, route: `/logistics/available-jobs/${userId}` },
+        { label: 'Assigned Jobs', value: assignedJobsCount, icon: <CheckCircle size={24} />, route: `/logistics/assigned-jobs/${userId}` },
+        { label: 'Quotes Submitted', value: quotesSubmittedCount, icon: <FileText size={24} />, route: `/logistics/available-jobs/${userId}`, state: { filter: 'Quoted' } },
     ];
 
     return (
@@ -37,16 +38,16 @@ const LogisticsDashboard = () => {
                 <div style={{ display: 'flex', alignItems: 'center', gap: '3rem' }}>
                     <div style={{ fontSize: '1.5rem', fontWeight: '700', color: 'var(--text-main)' }}>TriLink</div>
                     <div style={{ display: 'flex', gap: '2rem', fontSize: '0.95rem', fontWeight: '500' }}>
-                        <a href="#" onClick={() => { const userId = localStorage.getItem('userId'); navigate(`/logistics/dashboard/${userId}`); }} style={{ color: 'var(--text-main)', cursor: 'pointer' }}>Dashboard</a>
-                        <span onClick={() => { const userId = localStorage.getItem('userId'); navigate(`/logistics/available-jobs/${userId}`); }} style={{ color: 'var(--text-muted)', cursor: 'pointer' }}>Search Jobs</span>
-                        <span onClick={() => { const userId = localStorage.getItem('userId'); navigate(`/logistics/assigned-jobs/${userId}`); }} style={{ color: 'var(--text-muted)', cursor: 'pointer' }}>Assigned Jobs</span>
+                        <a href="#" onClick={() => navigate(`/logistics/dashboard/${userId}`)} style={{ color: 'var(--text-main)', cursor: 'pointer' }}>Dashboard</a>
+                        <span onClick={() => navigate(`/logistics/available-jobs/${userId}`)} style={{ color: 'var(--text-muted)', cursor: 'pointer' }}>Search Jobs</span>
+                        <span onClick={() => navigate(`/logistics/assigned-jobs/${userId}`)} style={{ color: 'var(--text-muted)', cursor: 'pointer' }}>Assigned Jobs</span>
                     </div>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
                     <Bell size={20} color="var(--text-muted)" />
                     <div
                         style={{ width: '32px', height: '32px', background: '#e2e8f0', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
-                        onClick={() => { const userId = localStorage.getItem('userId'); navigate(`/logistics/profile/${userId}`); }}
+                        onClick={() => navigate(`/logistics/profile/${userId}`)}
                     >
                         <User size={18} color="var(--text-muted)" />
                     </div>
@@ -65,7 +66,7 @@ const LogisticsDashboard = () => {
                         <div
                             key={index}
                             className="card"
-                            onClick={() => { const userId = localStorage.getItem('userId'); stat.route && navigate(`${stat.route}/${userId}`, { state: stat.state }); }}
+                            onClick={() => stat.route && navigate(stat.route, { state: stat.state })}
                             style={{ padding: '1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: stat.route ? 'pointer' : 'default' }}
                         >
                             <div>
@@ -91,6 +92,8 @@ const LogisticsDashboard = () => {
                                         <th style={{ padding: '1rem 1.5rem', textAlign: 'left', fontSize: '0.85rem', color: 'var(--text-muted)', fontWeight: '600' }}>Route</th>
                                         <th style={{ padding: '1rem 1.5rem', textAlign: 'left', fontSize: '0.85rem', color: 'var(--text-muted)', fontWeight: '600' }}>Status</th>
                                         <th style={{ padding: '1rem 1.5rem', textAlign: 'left', fontSize: '0.85rem', color: 'var(--text-muted)', fontWeight: '600' }}>Date Accepted</th>
+                                        <th style={{ padding: '1rem 1.5rem', textAlign: 'left', fontSize: '0.85rem', color: 'var(--text-muted)', fontWeight: '600' }}>Driver Experience</th>
+                                        <th style={{ padding: '1rem 1.5rem', textAlign: 'left', fontSize: '0.85rem', color: 'var(--text-muted)', fontWeight: '600' }}>Vehicle Recommended</th>
                                         <th style={{ padding: '1rem 1.5rem', textAlign: 'right', fontSize: '0.85rem', color: 'var(--text-muted)', fontWeight: '600' }}>Distance</th>
                                     </tr>
                                 </thead>
@@ -108,6 +111,8 @@ const LogisticsDashboard = () => {
                                                 </span>
                                             </td>
                                             <td style={{ padding: '1rem 1.5rem', color: 'var(--text-muted)' }}>{job.date}</td>
+                                            <td style={{ padding: '1rem 1.5rem', color: 'var(--text-muted)' }}>{job.driverExp || '-'}</td>
+                                            <td style={{ padding: '1rem 1.5rem', color: 'var(--text-muted)' }}>{job.vehicleType || '-'}</td>
                                             <td style={{ padding: '1rem 1.5rem', textAlign: 'right', color: 'var(--text-muted)' }}>{job.distance}</td>
                                         </tr>
                                     ))}

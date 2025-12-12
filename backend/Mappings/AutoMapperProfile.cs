@@ -38,7 +38,7 @@ namespace Backend.Mappings
 
             CreateMap<Offer, OfferDto>();
 
-            CreateMap<LogisticsEntry, LogisticsDto>()
+            CreateMap<LogisticsEntry, LogisticsJobDto>()
                 .ForMember(dest => dest.ProductName, opt => opt.MapFrom(src => src.Order != null && src.Order.Product != null ? src.Order.Product.Name : null))
                 .ForMember(dest => dest.ProviderName, opt => opt.MapFrom(src => src.Provider != null ? src.Provider.Username : null));
 

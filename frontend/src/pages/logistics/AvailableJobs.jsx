@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { Bell, User, Search, ChevronDown, MapPin, Package, Calendar, Clock } from 'lucide-react';
 import '../../index.css';
 
 const AvailableJobs = () => {
     const navigate = useNavigate();
+    const { userId } = useParams();
     const location = useLocation();
 
     const [searchQuery, setSearchQuery] = useState('');
@@ -140,18 +141,18 @@ const AvailableJobs = () => {
             {/* Header */}
             <header style={{ background: 'white', borderBottom: '1px solid var(--border)', padding: '1rem 3rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '3rem' }}>
-                    <div style={{ fontSize: '1.5rem', fontWeight: '700', color: 'var(--text-main)', cursor: 'pointer' }} onClick={() => { const userId = localStorage.getItem('userId'); navigate(`/logistics/dashboard/${userId}`); }}>TriLink</div>
+                    <div style={{ fontSize: '1.5rem', fontWeight: '700', color: 'var(--text-main)', cursor: 'pointer' }} onClick={() => navigate(`/ logistics / dashboard / ${userId} `)}>TriLink</div>
                     <div style={{ display: 'flex', gap: '2rem', fontSize: '0.95rem', fontWeight: '500' }}>
-                        <a href="#" onClick={() => { const userId = localStorage.getItem('userId'); navigate(`/logistics/dashboard/${userId}`); }} style={{ color: 'var(--text-muted)', cursor: 'pointer' }}>Dashboard</a>
-                        <span onClick={() => { const userId = localStorage.getItem('userId'); navigate(`/logistics/available-jobs/${userId}`); }} style={{ color: 'var(--text-main)', cursor: 'pointer' }}>Search Jobs</span>
-                        <span onClick={() => { const userId = localStorage.getItem('userId'); navigate(`/logistics/assigned-jobs/${userId}`); }} style={{ color: 'var(--text-muted)', cursor: 'pointer' }}>Assigned Jobs</span>
+                        <a href="#" onClick={() => navigate(`/ logistics / dashboard / ${userId} `)} style={{ color: 'var(--text-muted)', cursor: 'pointer' }}>Dashboard</a>
+                        <span onClick={() => navigate(`/ logistics / available - jobs / ${userId} `)} style={{ color: 'var(--text-main)', cursor: 'pointer' }}>Search Jobs</span>
+                        <span onClick={() => navigate(`/ logistics / assigned - jobs / ${userId} `)} style={{ color: 'var(--text-muted)', cursor: 'pointer' }}>Assigned Jobs</span>
                     </div>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
                     <Bell size={20} color="var(--text-muted)" />
                     <div
                         style={{ width: '32px', height: '32px', background: '#e2e8f0', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
-                        onClick={() => { const userId = localStorage.getItem('userId'); navigate(`/logistics/profile/${userId}`); }}
+                        onClick={() => navigate(`/ logistics / profile / ${userId} `)}
                     >
                         <User size={18} color="var(--text-muted)" />
                     </div>

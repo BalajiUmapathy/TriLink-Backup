@@ -4,7 +4,7 @@ import { Truck, Scale, Box, Thermometer, Shield, CheckCircle, AlertCircle, Arrow
 import '../../index.css';
 
 const TruckRecommendation = () => {
-    const { id } = useParams();
+    const { id, userId } = useParams();
     const navigate = useNavigate();
     const [selectedTruck, setSelectedTruck] = useState(null);
 
@@ -53,7 +53,6 @@ const TruckRecommendation = () => {
 
     const handleContinue = () => {
         if (selectedTruck) {
-            const userId = localStorage.getItem('userId');
             navigate(`/logistics/driver-matching/${id}/${userId}`);
         }
     };

@@ -4,7 +4,7 @@ import { User, Shield, Star, Award, Map, CheckCircle, ArrowRight, ThumbsUp } fro
 import '../../index.css';
 
 const DriverMatching = () => {
-    const { id } = useParams();
+    const { id, userId } = useParams();
     const navigate = useNavigate();
     const [selectedDriver, setSelectedDriver] = useState(null);
     const [showSuccess, setShowSuccess] = useState(false);
@@ -52,7 +52,6 @@ const DriverMatching = () => {
         if (selectedDriver) {
             setShowSuccess(true);
             setTimeout(() => {
-                const userId = localStorage.getItem('userId');
                 navigate(`/logistics/dashboard/${userId}`);
             }, 2000);
         }
