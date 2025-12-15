@@ -25,71 +25,80 @@ const RouteSuggestion = () => {
     const [suggestedRouteData, setSuggestedRouteData] = useState(null);
     const [isLoading, setIsLoading] = useState(false);
 
-    // Mock Database
-    const mockJobsDatabase = {
-        'JOB-001': {
-            id: 'JOB-001',
-            referenceId: 'JOB-2025-001',
-            origin: 'Chennai',
-            destination: 'Delhi',
-            pickupLocation: '123 Industrial Park, Zone A, Chennai',
-            deliveryLocation: '456 Central Delhi, Delhi',
-            scheduledTime: 'Jan 25, 2025 - 10:00 AM',
-            driver: 'Parthiban',
-            status: 'Pending'
-        },
-        'JOB-002': {
-            id: 'JOB-002',
-            referenceId: 'JOB-2025-002',
-            origin: 'Delhi',
-            destination: 'Hossur',
-            pickupLocation: '789 Logistics Hub, Delhi',
-            deliveryLocation: '101 Manufacturing Unit, Hossur',
-            scheduledTime: 'Jan 22, 2025 - 08:30 AM',
-            driver: 'Rajesh Kumar',
-            status: 'In Transit'
-        }
-    };
-
     useEffect(() => {
-        // Fetch job data based on ID
-        const data = mockJobsDatabase[id];
-        if (data) {
-            setJobData(data);
-        } else {
-            // Fallback or handle not found
-            setJobData({
-                id: id,
-                referenceId: `JOB-${new Date().getFullYear()}-${Math.floor(Math.random() * 1000)}`,
-                origin: 'Unknown',
-                destination: 'Unknown',
-                pickupLocation: 'N/A',
-                deliveryLocation: 'N/A',
-                scheduledTime: 'N/A',
-                driver: 'Unassigned',
-                status: 'Unknown'
-            });
-        }
+        const fetchJobDetails = async () => {
+            try {
+                const token = localStorage.getItem('token');
+                // The ID from params is the Job ID (UUID)
+                const response = await fetch(`http://localhost:5081/api/BuyerLogisticsJob/${id}`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+
+                    // Format scheduled time - include time slot if available
+                    let scheduledTimeDisplay = new Date(data.pickupDate).toLocaleDateString();
+                    if (data.pickupTimeSlot) {
+                        scheduledTimeDisplay += `, ${data.pickupTimeSlot}`;
+                    } else {
+                        // If no time slot, try to extract time from pickupDate
+                        const pickupDateTime = new Date(data.pickupDate);
+                        const timeString = pickupDateTime.toLocaleTimeString();
+                        // Only add time if it's not midnight (00:00:00)
+                        if (timeString !== '12:00:00 AM' && timeString !== '00:00:00') {
+                            scheduledTimeDisplay += `, ${timeString}`;
+                        }
+                    }
+
+                    setJobData({
+                        ...data, // Spread data first to avoid overwriting custom fields
+                        id: data.id,
+                        referenceId: `JOB-${data.id.substring(0, 8).toUpperCase()}`,
+                        origin: data.pickupCity,
+                        destination: data.dropCity,
+                        pickupLocation: `${data.pickupAddressLine1}, ${data.pickupCity}`,
+                        deliveryLocation: `${data.dropAddressLine1}, ${data.dropCity}`,
+                        scheduledTime: scheduledTimeDisplay,
+                        rawPickupDate: data.pickupDate, // Store raw ISO string for calculation
+                        status: data.status
+                    });
+                } else {
+                    console.error("Failed to fetch job details");
+                }
+            } catch (error) {
+                console.error("Error fetching job:", error);
+            }
+        };
+
+        if (id) fetchJobDetails();
     }, [id]);
 
     const handleSuggest = async () => {
         setIsLoading(true);
         try {
+            // Use real origin and destination cities from job data
             const response = await fetch('http://localhost:5081/api/Logistics/suggest-route', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    origin: jobData.origin,
-                    destination: jobData.destination
+                    origin: jobData.pickupLocation, // Use full address for better accuracy
+                    destination: jobData.deliveryLocation,
+                    originCity: jobData.origin, // Backup: Use City name if full address fails
+                    destinationCity: jobData.destination // Backup
                 })
             });
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(errorText || "Failed to fetch route");
+            }
             const data = await response.json();
             setSuggestedRouteData(data);
             setShowComparison(true);
             setSelectedRoute('optimal'); // Auto-select optimal
         } catch (error) {
             console.error("Failed to fetch route", error);
-            alert("Failed to fetch route suggestions. Please ensure the backend is running.");
+            alert(`Failed to fetch route suggestions: ${error.message}`);
         } finally {
             setIsLoading(false);
         }
@@ -106,9 +115,8 @@ const RouteSuggestion = () => {
         if (!startTime || !durationStr || startTime === 'N/A') return '--';
 
         try {
-            // Parse start time "Jan 25, 2025 - 10:00 AM"
-            const formattedStart = startTime.replace(' -', '');
-            const startDate = new Date(formattedStart);
+            // Parse start time (Expect ISO string now)
+            const startDate = new Date(startTime);
 
             // Parse duration "27 hr" or "32.5 hr"
             const durationHours = parseFloat(durationStr);
@@ -268,7 +276,7 @@ const RouteSuggestion = () => {
                                 <div>
                                     <div style={{ color: 'var(--text-muted)', marginBottom: '0.25rem' }}>Expected Arrival</div>
                                     <div style={{ fontWeight: '500' }}>
-                                        {calculateArrival(jobData?.scheduledTime, suggestedRouteData?.duration)}
+                                        {calculateArrival(jobData?.rawPickupDate, suggestedRouteData?.duration)}
                                     </div>
                                 </div>
                                 <div>

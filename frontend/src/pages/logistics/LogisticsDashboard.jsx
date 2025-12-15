@@ -10,24 +10,58 @@ const LogisticsDashboard = () => {
 
     // Stats
     // Hardcoded for now as per design, should not change when quoting
-    const availableJobsCount = 24;
-    const assignedJobsCount = 12;
-    // Calculate Quotes Submitted from LocalStorage
-    const [quotesSubmittedCount, setQuotesSubmittedCount] = useState(8);
+    const [availableJobsCount, setAvailableJobsCount] = useState(0);
+    const [assignedJobsCount, setAssignedJobsCount] = useState(0);
+    const [quotesSubmittedCount, setQuotesSubmittedCount] = useState(0);
 
     useEffect(() => {
-        const storedQuotes = JSON.parse(localStorage.getItem('submittedQuotes') || '{}');
-        const count = Object.keys(storedQuotes).length;
-        setQuotesSubmittedCount(8 + count);
+        const fetchStats = async () => {
+            try {
+                const token = localStorage.getItem('token');
+                const headers = { 'Authorization': `Bearer ${token}` };
 
-        const history = JSON.parse(localStorage.getItem('jobHistory') || '[]');
-        setJobHistory(history);
+                // Fetch Available Jobs
+                const availableRes = await fetch('http://localhost:5081/api/BuyerLogisticsJob/available', { headers });
+                if (availableRes.ok) {
+                    const data = await availableRes.json();
+                    setAvailableJobsCount(data.length);
+                }
+
+                // Fetch Assigned Jobs
+                const assignedRes = await fetch('http://localhost:5081/api/BuyerLogisticsJob/assigned', { headers });
+                if (assignedRes.ok) {
+                    const data = await assignedRes.json();
+                    setAssignedJobsCount(data.length);
+                }
+
+                // Fetch Quotes Submitted (only Pending quotes, not Accepted/Rejected)
+                const quotesRes = await fetch('http://localhost:5081/api/BuyerLogisticsJob/my-quotes', { headers });
+                if (quotesRes.ok) {
+                    const data = await quotesRes.json();
+                    // Only count quotes that are still "Pending" (actually quoted, not accepted/rejected)
+                    const pendingQuotes = data.filter(quote => quote.status === 'Pending');
+                    setQuotesSubmittedCount(pendingQuotes.length);
+                }
+
+                // Load Job History - Only show COMPLETED jobs
+                const history = JSON.parse(localStorage.getItem('jobHistory') || '[]');
+                const completedHistory = history.filter(job =>
+                    job.status === 'Completed' || job.status === 'Delivered'
+                );
+                setJobHistory(completedHistory);
+
+            } catch (error) {
+                console.error("Error fetching dashboard stats:", error);
+            }
+        };
+
+        fetchStats();
     }, []);
 
     const stats = [
-        { label: 'Available Jobs', value: availableJobsCount, icon: <Truck size={24} />, route: '/logistics/available-jobs' },
-        { label: 'Assigned Jobs', value: assignedJobsCount, icon: <CheckCircle size={24} />, route: '/logistics/assigned-jobs' },
-        { label: 'Quotes Submitted', value: quotesSubmittedCount, icon: <FileText size={24} />, route: '/logistics/available-jobs', state: { filter: 'Quoted' } },
+        { label: 'Available Jobs', value: availableJobsCount, icon: <Truck size={24} />, route: `/logistics/available-jobs/${localStorage.getItem('userId')}` },
+        { label: 'Assigned Jobs', value: assignedJobsCount, icon: <CheckCircle size={24} />, route: `/logistics/assigned-jobs/${localStorage.getItem('userId')}` },
+        { label: 'Quotes Submitted', value: quotesSubmittedCount, icon: <FileText size={24} />, route: `/logistics/available-jobs/${localStorage.getItem('userId')}`, state: { filter: 'Quoted' } },
     ];
 
     return (
@@ -99,7 +133,9 @@ const LogisticsDashboard = () => {
                                 <tbody>
                                     {jobHistory.map((job, index) => (
                                         <tr key={index} style={{ borderBottom: '1px solid var(--border)' }}>
-                                            <td style={{ padding: '1rem 1.5rem', fontWeight: '500' }}>#{job.id}</td>
+                                            <td style={{ padding: '1rem 1.5rem', fontWeight: '500' }}>
+                                                {job.id && job.id.length > 8 ? `JOB-${job.id.substring(0, 8).toUpperCase()}` : job.id}
+                                            </td>
                                             <td style={{ padding: '1rem 1.5rem' }}>{job.origin} → {job.destination}</td>
                                             <td style={{ padding: '1rem 1.5rem' }}>
                                                 <span style={{

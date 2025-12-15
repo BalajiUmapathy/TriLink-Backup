@@ -16,7 +16,7 @@ const AvailableJobs = () => {
     // Modal State
     const [showQuoteModal, setShowQuoteModal] = useState(false);
     const [selectedJob, setSelectedJob] = useState(null);
-    const [quoteForm, setQuoteForm] = useState({ amount: '', date: '' });
+    const [quoteForm, setQuoteForm] = useState({ amount: '', date: '', time: '' });
     const [submittedQuotes, setSubmittedQuotes] = useState({});
 
     // Fetch jobs and my quotes from API
@@ -138,7 +138,7 @@ const AvailableJobs = () => {
 
     const openQuoteModal = (job) => {
         setSelectedJob(job);
-        setQuoteForm({ amount: '', date: '' });
+        setQuoteForm({ amount: '', date: '', time: '' });
         setShowQuoteModal(true);
     };
 
@@ -147,6 +147,13 @@ const AvailableJobs = () => {
 
         try {
             const token = localStorage.getItem('token');
+
+            // Combine date and time into ISO datetime string
+            let estimatedDeliveryDateTime = quoteForm.date;
+            if (quoteForm.time) {
+                estimatedDeliveryDateTime = `${quoteForm.date}T${quoteForm.time}:00`;
+            }
+
             const response = await fetch('http://localhost:5081/api/BuyerLogisticsJob/quote', {
                 method: 'POST',
                 headers: {
@@ -156,7 +163,7 @@ const AvailableJobs = () => {
                 body: JSON.stringify({
                     JobId: selectedJob.fullId,
                     QuoteAmount: parseFloat(quoteForm.amount),
-                    EstimatedDeliveryDate: quoteForm.date
+                    EstimatedDeliveryDate: estimatedDeliveryDateTime
                 })
             });
 
@@ -450,6 +457,16 @@ const AvailableJobs = () => {
                                     className="input-field"
                                     value={quoteForm.date}
                                     onChange={(e) => setQuoteForm({ ...quoteForm, date: e.target.value })}
+                                />
+                            </div>
+                            <div className="input-group">
+                                <label className="input-label">Estimated Delivery Time</label>
+                                <input
+                                    type="time"
+                                    required
+                                    className="input-field"
+                                    value={quoteForm.time}
+                                    onChange={(e) => setQuoteForm({ ...quoteForm, time: e.target.value })}
                                 />
                             </div>
 

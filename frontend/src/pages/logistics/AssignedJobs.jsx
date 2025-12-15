@@ -22,6 +22,33 @@ const AssignedJobs = () => {
             if (response.ok) {
                 const data = await response.json();
                 setAssignedJobs(data);
+
+                // Auto-save any Delivered/Completed jobs to Job History
+                const existingHistory = JSON.parse(localStorage.getItem('jobHistory') || '[]');
+                const deliveredJobs = data.filter(job => job.status === 'Delivered' || job.status === 'Completed');
+
+                deliveredJobs.forEach(job => {
+                    console.log('[DEBUG] Job data for history:', job);
+                    console.log('[DEBUG] pickupCity:', job.pickupCity, '| dropCity:', job.dropCity);
+                    const jobExists = existingHistory.some(h => h.id === job.id);
+                    if (!jobExists) {
+                        const historyEntry = {
+                            id: job.id,
+                            origin: job.pickupCity || 'Unknown',
+                            destination: job.dropCity || 'Unknown',
+                            status: job.status,
+                            date: new Date().toLocaleDateString(),
+                            driverExp: '-',
+                            vehicleType: '-',
+                            distance: 'N/A'
+                        };
+                        existingHistory.push(historyEntry);
+                    }
+                });
+
+                if (deliveredJobs.length > 0) {
+                    localStorage.setItem('jobHistory', JSON.stringify(existingHistory));
+                }
             }
         } catch (error) {
             console.error(error);
@@ -43,6 +70,30 @@ const AssignedJobs = () => {
             });
 
             if (response.ok) {
+                // If status is Delivered, add to Job History
+                if (newStatus === 'Delivered') {
+                    const jobToSave = assignedJobs.find(j => j.id === jobId);
+                    if (jobToSave) {
+                        const historyEntry = {
+                            id: jobToSave.id,
+                            origin: jobToSave.pickupCity || 'Unknown',
+                            destination: jobToSave.dropCity || 'Unknown',
+                            status: 'Delivered',
+                            date: new Date().toLocaleDateString(),
+                            driverExp: '-',
+                            vehicleType: '-',
+                            distance: 'N/A'
+                        };
+
+                        const existingHistory = JSON.parse(localStorage.getItem('jobHistory') || '[]');
+                        const jobExists = existingHistory.some(h => h.id === jobToSave.id);
+                        if (!jobExists) {
+                            existingHistory.push(historyEntry);
+                            localStorage.setItem('jobHistory', JSON.stringify(existingHistory));
+                        }
+                    }
+                }
+
                 fetchAssignedJobs(); // Refresh list
                 if (selectedJob && selectedJob.id === jobId) {
                     setSelectedJob({ ...selectedJob, status: newStatus });
@@ -59,8 +110,8 @@ const AssignedJobs = () => {
         if (!job) return null;
 
         const nextStatusOptions = {
-            'Assigned': 'Picked Up',
-            'Picked Up': 'In Transit',
+            'Assigned': 'Picked',
+            'Picked': 'In Transit',
             'In Transit': 'Delivered'
         };
 
@@ -238,9 +289,10 @@ const AssignedJobs = () => {
                                 <tr>
                                     <th style={{ padding: '1rem 1.5rem', textAlign: 'left', fontSize: '0.85rem', color: 'var(--text-muted)', fontWeight: '600' }}>Job ID</th>
                                     <th style={{ padding: '1rem 1.5rem', textAlign: 'left', fontSize: '0.85rem', color: 'var(--text-muted)', fontWeight: '600' }}>Route</th>
-                                    <th style={{ padding: '1rem 1.5rem', textAlign: 'left', fontSize: '0.85rem', color: 'var(--text-muted)', fontWeight: '600' }}>Date</th>
                                     <th style={{ padding: '1rem 1.5rem', textAlign: 'left', fontSize: '0.85rem', color: 'var(--text-muted)', fontWeight: '600' }}>Status</th>
-                                    <th style={{ padding: '1rem 1.5rem', textAlign: 'center', fontSize: '0.85rem', color: 'var(--text-muted)', fontWeight: '600' }}>Action</th>
+                                    <th style={{ padding: '1rem 1.5rem', textAlign: 'left', fontSize: '0.85rem', color: 'var(--text-muted)', fontWeight: '600' }}>Pickup Date</th>
+                                    <th style={{ padding: '1rem 1.5rem', textAlign: 'center', fontSize: '0.85rem', color: 'var(--text-muted)', fontWeight: '600' }}>Route</th>
+                                    <th style={{ padding: '1rem 1.5rem', textAlign: 'center', fontSize: '0.85rem', color: 'var(--text-muted)', fontWeight: '600' }}>Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -250,7 +302,6 @@ const AssignedJobs = () => {
                                         <td style={{ padding: '1rem 1.5rem' }}>
                                             {job.pickupCity} → {job.dropCity}
                                         </td>
-                                        <td style={{ padding: '1rem 1.5rem', color: 'var(--text-muted)' }}>{new Date(job.pickupDate).toLocaleDateString()}</td>
                                         <td style={{ padding: '1rem 1.5rem' }}>
                                             <span style={{
                                                 padding: '0.25rem 0.75rem', borderRadius: '20px', fontSize: '0.85rem', fontWeight: '600',
@@ -259,12 +310,38 @@ const AssignedJobs = () => {
                                                 {job.status}
                                             </span>
                                         </td>
+                                        <td style={{ padding: '1rem 1.5rem', color: 'var(--text-muted)' }}>{new Date(job.pickupDate).toLocaleDateString()}</td>
+                                        <td style={{ padding: '1rem 1.5rem', textAlign: 'center' }}>
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    const userId = localStorage.getItem('userId');
+                                                    navigate(`/logistics/route-suggestion/${userId}/${job.id}`);
+                                                }}
+                                                className="btn"
+                                                style={{
+                                                    fontSize: '0.75rem',
+                                                    padding: '0.4rem 0.8rem',
+                                                    background: 'white',
+                                                    border: '1px solid #10b981',
+                                                    color: '#10b981',
+                                                    borderRadius: '6px',
+                                                    display: 'inline-flex',
+                                                    alignItems: 'center',
+                                                    gap: '0.25rem',
+                                                    cursor: 'pointer'
+                                                }}
+                                            >
+                                                <MapPin size={12} /> Finalize Route
+                                            </button>
+                                        </td>
                                         <td style={{ padding: '1rem 1.5rem', textAlign: 'center' }}>
                                             <button
                                                 onClick={(e) => { e.stopPropagation(); setSelectedJob(job); }}
-                                                style={{ background: '#3b82f6', color: 'white', border: 'none', padding: '0.4rem 0.8rem', borderRadius: '6px', fontSize: '0.8rem', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}
+                                                className="btn btn-primary"
+                                                style={{ fontSize: '0.8rem', padding: '0.4rem 0.8rem' }}
                                             >
-                                                <Eye size={14} /> View
+                                                Update Status
                                             </button>
                                         </td>
                                     </tr>

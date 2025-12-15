@@ -34,19 +34,20 @@ const SearchProducts = () => {
                 const uniqueProducts = data.map(p => ({
                     id: p.id,
                     name: p.name,
-                    category: p.category || 'Uncategorized', // Field added in DTO
+                    category: p.category || 'Uncategorized',
                     subCategory: p.category || 'General',
-                    supplier: p.supplierName || 'Unknown Supplier', // DTO has supplierName
+                    supplier: p.supplierName || 'Unknown Supplier',
                     supplierCompanyName: p.supplierCompanyName || 'N/A',
                     supplierContactPerson: p.supplierContactPerson || 'N/A',
                     supplierEmail: p.supplierEmail || 'N/A',
                     supplierContactNumber: p.supplierContactNumber || 'N/A',
                     price: `₹${p.basePrice}`,
                     priceValue: p.basePrice,
-                    unit: p.unit || 'Unit', // Field added in DTO
+                    unit: p.unit || 'Unit',
                     availableQty: p.quantity,
                     minOrderQty: p.minOrderQty || 0,
                     location: p.location || 'Unknown',
+                    imageUrl: p.imageUrl || null,
                     rating: 4.5, // Mock
                     verified: true, // Mock
                     description: p.description
@@ -306,48 +307,6 @@ const SearchProducts = () => {
                         </div>
                     </div>
 
-                    {/* Rating & Verified */}
-                    <div className="card" style={{ padding: '1.5rem' }}>
-                        <h4 style={{ fontSize: '0.9rem', fontWeight: '600', marginBottom: '1rem' }}>Supplier Quality</h4>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                            <label style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', fontSize: '0.9rem', cursor: 'pointer' }}>
-                                <input
-                                    type="checkbox"
-                                    checked={filters.verifiedOnly}
-                                    onChange={(e) => setFilters({ ...filters, verifiedOnly: e.target.checked })}
-                                    style={{ accentColor: 'black', width: '16px', height: '16px' }}
-                                />
-                                <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-                                    Verified Suppliers <CheckCircle size={14} fill="#3b82f6" color="white" />
-                                </span>
-                            </label>
-
-                            <div>
-                                <div style={{ fontSize: '0.85rem', marginBottom: '0.5rem', color: 'var(--text-muted)' }}>Minimum Rating</div>
-                                <div style={{ display: 'flex', gap: '0.5rem' }}>
-                                    {[4, 3, 2, 1].map(rating => (
-                                        <button
-                                            key={rating}
-                                            onClick={() => setFilters({ ...filters, minRating: rating })}
-                                            style={{
-                                                padding: '0.4rem 0.8rem',
-                                                borderRadius: '4px',
-                                                border: filters.minRating === rating ? '1px solid black' : '1px solid var(--border)',
-                                                background: filters.minRating === rating ? 'black' : 'white',
-                                                color: filters.minRating === rating ? 'white' : 'var(--text-main)',
-                                                fontSize: '0.85rem',
-                                                cursor: 'pointer',
-                                                display: 'flex', alignItems: 'center', gap: '0.25rem'
-                                            }}
-                                        >
-                                            {rating}+ <Star size={12} fill={filters.minRating === rating ? "white" : "black"} />
-                                        </button>
-                                    ))}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
                 </aside>
 
                 {/* Results Grid */}
@@ -403,8 +362,12 @@ const SearchProducts = () => {
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '1.5rem', marginBottom: '3rem' }}>
                         {filteredProducts.map((product) => (
                             <div key={product.id} className="card" style={{ padding: '0', overflow: 'hidden', display: 'flex', flexDirection: 'column', transition: 'transform 0.2s', cursor: 'pointer' }}>
-                                <div style={{ height: '180px', background: '#f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)', fontSize: '0.9rem', position: 'relative' }}>
-                                    Product Image
+                                <div style={{ height: '180px', background: '#f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)', fontSize: '0.9rem', position: 'relative', overflow: 'hidden' }}>
+                                    {product.imageUrl ? (
+                                        <img src={product.imageUrl} alt={product.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                    ) : (
+                                        <span>Product Image</span>
+                                    )}
                                     {product.verified && (
                                         <div style={{ position: 'absolute', top: '10px', right: '10px', background: 'white', padding: '0.25rem 0.5rem', borderRadius: '4px', fontSize: '0.75rem', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '0.25rem', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
                                             Verified <CheckCircle size={12} fill="#3b82f6" color="white" />

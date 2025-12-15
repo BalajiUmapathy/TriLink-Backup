@@ -70,7 +70,9 @@ namespace Backend.Controllers
             }
 
             var job = await _context.BuyerLogisticsJobs
-                .FirstOrDefaultAsync(j => j.Id == id && j.BuyerId == userId);
+                .Include(j => j.Quotes)
+                .FirstOrDefaultAsync(j => j.Id == id && 
+                    (j.BuyerId == userId || j.Quotes.Any(q => q.LogisticsProviderId == userId)));
 
             if (job == null)
             {
@@ -263,10 +265,12 @@ namespace Backend.Controllers
                 return Unauthorized("User ID not found in token");
             }
 
-            // Find jobs where the user has an ACCEPTED quote
+            // Find jobs where the user has an ACCEPTED quote, but exclude DELIVERED jobs
+            // Delivered jobs should only appear in Job History, not in Assigned Jobs
             var jobs = await _context.BuyerLogisticsJobs
                 .Include(j => j.Quotes)
-                .Where(j => j.Quotes.Any(q => q.LogisticsProviderId == userId && q.Status == "Accepted"))
+                .Where(j => j.Quotes.Any(q => q.LogisticsProviderId == userId && q.Status == "Accepted") 
+                         && j.Status != "Delivered") // Exclude delivered jobs
                 .Distinct() // Ensure no duplicates
                 .OrderByDescending(j => j.UpdatedAt)
                 .ToListAsync();

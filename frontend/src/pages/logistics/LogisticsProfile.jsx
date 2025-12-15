@@ -154,7 +154,7 @@ const LogisticsProfile = () => {
                     <Bell size={20} color="var(--text-muted)" />
                     <div
                         style={{ width: '32px', height: '32px', background: '#eff6ff', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', border: '1px solid var(--primary)' }}
-                        onClick={() => navigate('/logistics/profile')}
+                        onClick={() => { const userId = localStorage.getItem('userId'); navigate(`/logistics/profile/${userId}`); }}
                     >
                         <User size={18} color="var(--primary)" />
                     </div>

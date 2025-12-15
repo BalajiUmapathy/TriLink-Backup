@@ -33,8 +33,8 @@ const SupplierLogisticsJobManagement = () => {
 
     const filteredJobs = jobs.filter(job => {
         if (filter === 'All') return true;
-        if (filter === 'Active') return job.status === 'Active';
-        if (filter === 'Completed') return job.status === 'Completed';
+        if (filter === 'Active') return ['Active', 'Assigned', 'Picked', 'In Transit'].includes(job.status);
+        if (filter === 'Completed') return ['Completed', 'Delivered', 'Cancelled'].includes(job.status);
         return true;
     });
 
@@ -96,7 +96,11 @@ const SupplierLogisticsJobManagement = () => {
                                 transition: 'all 0.2s'
                             }}
                         >
-                            {tab} ({tab === 'All' ? jobs.length : jobs.filter(j => j.status === tab).length})
+                            {tab} ({
+                                tab === 'All' ? jobs.length :
+                                    tab === 'Active' ? jobs.filter(j => ['Active', 'Assigned', 'Picked', 'In Transit'].includes(j.status)).length :
+                                        jobs.filter(j => ['Completed', 'Delivered', 'Cancelled'].includes(j.status)).length
+                            })
                         </button>
                     ))}
                 </div>

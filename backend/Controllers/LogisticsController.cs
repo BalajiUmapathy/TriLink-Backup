@@ -29,9 +29,9 @@ namespace Backend.Controllers
 
             _logger.LogInformation($"Getting route for {request.Origin} to {request.Destination}");
 
-            // 1. Geocode Origin and Destination
-            var originCoords = await _routeService.GeocodeAsync(request.Origin);
-            var destCoords = await _routeService.GeocodeAsync(request.Destination);
+            // 1. Geocode Origin and Destination (with fallback)
+            var originCoords = await _routeService.GeocodeAsync(request.Origin, request.OriginCity);
+            var destCoords = await _routeService.GeocodeAsync(request.Destination, request.DestinationCity);
 
             if (originCoords == null || destCoords == null)
             {
@@ -55,7 +55,7 @@ namespace Backend.Controllers
             var response = new RouteResponseDto
             {
                 Distance = $"{route.Value.distanceKm:F0} km",
-                Duration = $"{route.Value.durationHours:F0} hr",
+                Duration = FormatDuration(route.Value.durationHours),
                 FuelCost = $"₹{fuelCost:F0}",
                 DriverExperience = experience,
                 VehicleType = vehicle,
@@ -65,6 +65,19 @@ namespace Backend.Controllers
             };
 
             return Ok(response);
+        }
+
+        private string FormatDuration(double hours)
+        {
+            int wholeHours = (int)hours;
+            int minutes = (int)((hours - wholeHours) * 60);
+            
+            if (wholeHours > 0 && minutes > 0)
+                return $"{wholeHours} hr {minutes} min";
+            else if (wholeHours > 0)
+                return $"{wholeHours} hr";
+            else
+                return $"{minutes} min";
         }
     }
 }

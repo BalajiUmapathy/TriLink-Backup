@@ -41,7 +41,7 @@ const AddProduct = () => {
         payload.append('LeadTime', formData.leadTime || 7);
         payload.append('Description', formData.description || "");
         payload.append('Status', status);
-        payload.append('Location', "Warehouse A"); // Hardcoded for now
+        payload.append('Location', formData.location || 'Not Specified');
 
         // Append Files
         if (formData.images) {
@@ -207,7 +207,7 @@ const AddProduct = () => {
                                 <input
                                     type="text"
                                     name="location"
-                                    placeholder="e.g. Warehouse A"
+                                    placeholder="e.g. Chennai Warehouse, Mumbai Depot"
                                     className="input-field"
                                     value={formData.location}
                                     onChange={handleChange}

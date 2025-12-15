@@ -24,22 +24,25 @@ const RouteSummary = () => {
     const handleAccept = () => {
         const newJob = {
             id: jobData?.id || 'JOB-' + Math.floor(Math.random() * 10000),
-            origin: 'Coimbatore',
-            destination: 'Delhi',
-            distance: suggestedRouteData?.distance || '2122 km',
-            eta: suggestedRouteData?.duration || '32 hours',
-            fuelCost: suggestedRouteData?.fuelCost || '₹50432',
-            driverExp: suggestedRouteData?.driverExperience || 'Mountain Terrain Specialist',
-            vehicleType: suggestedRouteData?.vehicleType || 'Heavy Duty Truck',
-            status: 'Accepted',
-            date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+            origin: jobData?.pickupCity || 'Unknown',
+            destination: jobData?.dropCity || 'Unknown',
+            status: 'Delivered',
+            date: new Date().toLocaleDateString(),
+            driverExp: suggestedRouteData?.driverExperience || '-',
+            vehicleType: suggestedRouteData?.vehicleType || '-',
+            distance: suggestedRouteData?.distance || 'N/A'
         };
 
         const existingHistory = JSON.parse(localStorage.getItem('jobHistory') || '[]');
-        const updatedHistory = [newJob, ...existingHistory];
-        localStorage.setItem('jobHistory', JSON.stringify(updatedHistory));
+        // Check if job already exists
+        const jobExists = existingHistory.some(h => h.id === jobData?.id);
+        if (!jobExists) {
+            existingHistory.push(newJob);
+            localStorage.setItem('jobHistory', JSON.stringify(existingHistory));
+        }
 
-        navigate('/logistics/dashboard');
+        const userId = localStorage.getItem('userId');
+        navigate(`/logistics/dashboard/${userId}`);
     };
 
     return (

@@ -117,7 +117,7 @@ const MyProducts = () => {
                     description: editModal.product.description || "",
                     basePrice: parseFloat(editModal.product.price) || 0,
                     quantity: parseInt(editModal.product.quantity) || 0,
-                    location: editModal.product.location || "Warehouse A",
+                    location: editModal.product.location || "Not Specified",
                     imageUrl: editModal.product.imageUrl || "",
                     certificateUrl: editModal.product.certificateUrl || "",
                     category: editModal.product.category,
@@ -187,7 +187,7 @@ const MyProducts = () => {
                         <p style={{ color: 'var(--text-muted)' }}>Manage your product listings</p>
                     </div>
                     <button
-                        onClick={() => navigate('/supplier/add-product')}
+                        onClick={() => { const userId = localStorage.getItem('userId'); navigate(`/supplier/add-product/${userId}`); }}
                         style={{ background: 'black', color: 'white', padding: '0.75rem 1.5rem', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: '500' }}
                     >
                         <Plus size={18} /> Add Product
@@ -382,6 +382,11 @@ const MyProducts = () => {
                             <div className="input-group">
                                 <label className="input-label">Min Order Qty</label>
                                 <input type="number" name="minOrderQty" className="input-field" value={editModal.product.minOrderQty} onChange={handleEditChange} />
+                            </div>
+
+                            <div className="input-group">
+                                <label className="input-label">Location</label>
+                                <input type="text" name="location" className="input-field" placeholder="e.g. Chennai Warehouse" value={editModal.product.location || ''} onChange={handleEditChange} />
                             </div>
 
                             <div className="input-group">
