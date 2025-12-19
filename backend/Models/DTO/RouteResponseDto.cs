@@ -10,5 +10,28 @@ namespace TriLink.DTOs
         public string? RouteGeometry { get; set; }
         public double[]? OriginCoords { get; set; }
         public double[]? DestinationCoords { get; set; }
+        
+        // Detailed cost breakdown
+        public CostBreakdownDto? CostBreakdown { get; set; }
+    }
+    
+    public class CostBreakdownDto
+    {
+        public string? VehicleType { get; set; }
+        public double ChargeableWeightKg { get; set; }
+        public double ActualWeightKg { get; set; }
+        public double VolumetricWeightKg { get; set; }
+        
+        public double FuelCost { get; set; }
+        public double FuelLiters { get; set; }
+        public double DriverCost { get; set; }
+        public double TollCost { get; set; }
+        public double MaintenanceCost { get; set; }
+        public double InsuranceCost { get; set; }
+        public double OverheadCost { get; set; }
+        public double TotalCost { get; set; }
+        
+        public string? TerrainType { get; set; }
+        public double LoadFactor { get; set; }
     }
 }

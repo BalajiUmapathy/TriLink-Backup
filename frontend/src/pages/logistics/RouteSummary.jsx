@@ -21,24 +21,34 @@ const RouteSummary = () => {
     const location = useLocation();
     const { jobData, suggestedRouteData } = location.state || {};
 
-    const handleAccept = () => {
-        const newJob = {
-            id: jobData?.id || 'JOB-' + Math.floor(Math.random() * 10000),
-            origin: jobData?.pickupCity || 'Unknown',
-            destination: jobData?.dropCity || 'Unknown',
-            status: 'Delivered',
-            date: new Date().toLocaleDateString(),
-            driverExp: suggestedRouteData?.driverExperience || '-',
-            vehicleType: suggestedRouteData?.vehicleType || '-',
-            distance: suggestedRouteData?.distance || 'N/A'
-        };
+    const handleAccept = async () => {
+        // Save route data to database via API
+        if (jobData?.id && suggestedRouteData) {
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch(`http://localhost:5081/api/BuyerLogisticsJob/${jobData.id}/route`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        distance: suggestedRouteData.distance || 'N/A',
+                        duration: suggestedRouteData.duration || 'N/A',
+                        driverExperience: suggestedRouteData.driverExperience || '-',
+                        vehicleType: suggestedRouteData.vehicleType || '-',
+                        polyline: suggestedRouteData.routeGeometry || ''
+                    })
+                });
 
-        const existingHistory = JSON.parse(localStorage.getItem('jobHistory') || '[]');
-        // Check if job already exists
-        const jobExists = existingHistory.some(h => h.id === jobData?.id);
-        if (!jobExists) {
-            existingHistory.push(newJob);
-            localStorage.setItem('jobHistory', JSON.stringify(existingHistory));
+                if (response.ok) {
+                    console.log('Route data saved to database');
+                } else {
+                    console.error('Failed to save route data');
+                }
+            } catch (error) {
+                console.error('Error saving route data:', error);
+            }
         }
 
         const userId = localStorage.getItem('userId');
@@ -123,10 +133,61 @@ const RouteSummary = () => {
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginBottom: '2rem' }}>
                             <StatBar icon={<Map size={20} />} label="Distance" value={suggestedRouteData?.distance || "2122 km"} />
                             <StatBar icon={<Clock size={20} />} label="ETA" value={suggestedRouteData?.duration || "32 hours"} />
-                            <StatBar icon={<Truck size={20} />} label="Fuel Cost" value={suggestedRouteData?.fuelCost || "₹50432"} />
+                            <StatBar icon={<Truck size={20} />} label="Total Cost" value={suggestedRouteData?.fuelCost || "₹50432"} />
                             <StatBar icon={<User size={20} />} label="Driver Exp." value={suggestedRouteData?.driverExperience || "Mountain Terrain Specialist"} />
                             <StatBar icon={<Truck size={20} />} label="Vehicle Type" value={suggestedRouteData?.vehicleType || "Heavy Duty Truck"} />
                         </div>
+
+                        {/* Cost Breakdown */}
+                        {suggestedRouteData?.costBreakdown && (
+                            <div style={{
+                                padding: '1.5rem',
+                                background: '#f8fafc',
+                                borderRadius: '12px',
+                                marginBottom: '2rem',
+                                border: '1px solid var(--border)'
+                            }}>
+                                <h3 style={{ fontSize: '0.9rem', fontWeight: '600', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                    <Truck size={18} /> Cost Breakdown
+                                </h3>
+                                <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: '0.6rem', fontSize: '0.9rem' }}>
+                                    <div style={{ color: 'var(--text-muted)' }}>Fuel ({suggestedRouteData.costBreakdown.fuelLiters}L)</div>
+                                    <div style={{ textAlign: 'right', fontWeight: '500' }}>₹{suggestedRouteData.costBreakdown.fuelCost?.toLocaleString()}</div>
+
+                                    <div style={{ color: 'var(--text-muted)' }}>Driver Wages</div>
+                                    <div style={{ textAlign: 'right', fontWeight: '500' }}>₹{suggestedRouteData.costBreakdown.driverCost?.toLocaleString()}</div>
+
+                                    <div style={{ color: 'var(--text-muted)' }}>Toll Charges</div>
+                                    <div style={{ textAlign: 'right', fontWeight: '500' }}>₹{suggestedRouteData.costBreakdown.tollCost?.toLocaleString()}</div>
+
+                                    <div style={{ color: 'var(--text-muted)' }}>Maintenance</div>
+                                    <div style={{ textAlign: 'right', fontWeight: '500' }}>₹{suggestedRouteData.costBreakdown.maintenanceCost?.toLocaleString()}</div>
+
+                                    <div style={{ color: 'var(--text-muted)' }}>Insurance</div>
+                                    <div style={{ textAlign: 'right', fontWeight: '500' }}>₹{suggestedRouteData.costBreakdown.insuranceCost?.toLocaleString()}</div>
+
+                                    <div style={{ color: 'var(--text-muted)' }}>Overhead</div>
+                                    <div style={{ textAlign: 'right', fontWeight: '500' }}>₹{suggestedRouteData.costBreakdown.overheadCost?.toLocaleString()}</div>
+                                </div>
+                                <div style={{
+                                    display: 'flex',
+                                    justifyContent: 'space-between',
+                                    marginTop: '1rem',
+                                    paddingTop: '1rem',
+                                    borderTop: '1px solid #e2e8f0',
+                                    fontWeight: '600',
+                                    fontSize: '1rem'
+                                }}>
+                                    <span>Total</span>
+                                    <span style={{ color: '#10b981' }}>₹{suggestedRouteData.costBreakdown.totalCost?.toLocaleString()}</span>
+                                </div>
+                                {suggestedRouteData.costBreakdown.chargeableWeightKg > 0 && (
+                                    <div style={{ marginTop: '0.75rem', fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                                        Chargeable Weight: {suggestedRouteData.costBreakdown.chargeableWeightKg?.toLocaleString()} kg | Terrain: {suggestedRouteData.costBreakdown.terrainType}
+                                    </div>
+                                )}
+                            </div>
+                        )}
 
                         {/* Waypoints */}
                         <div style={{ marginBottom: '2rem', borderTop: '1px solid var(--border)', paddingTop: '1.5rem' }}>
@@ -139,13 +200,13 @@ const RouteSummary = () => {
                                 <div style={{ marginBottom: '1.5rem', position: 'relative' }}>
                                     <div style={{ width: '20px', height: '20px', background: 'var(--text-main)', borderRadius: '50%', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px', position: 'absolute', left: '-32px', top: '0' }}>A</div>
                                     <h4 style={{ fontSize: '0.9rem', fontWeight: '600' }}>Pickup Point</h4>
-                                    <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>123 Industrial Park, Zone A, Coimbatore</p>
+                                    <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>{jobData?.pickupLocation || '123 Industrial Park, Zone A, Coimbatore'}</p>
                                 </div>
 
                                 <div style={{ position: 'relative' }}>
                                     <div style={{ width: '20px', height: '20px', background: '#94a3b8', borderRadius: '50%', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px', position: 'absolute', left: '-32px', top: '0' }}>B</div>
                                     <h4 style={{ fontSize: '0.9rem', fontWeight: '600' }}>Delivery Point</h4>
-                                    <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>456 Central Delhi, Maharastra</p>
+                                    <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>{jobData?.deliveryLocation || '456 Central Delhi, Maharashtra'}</p>
                                 </div>
                             </div>
                         </div>

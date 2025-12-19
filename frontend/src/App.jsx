@@ -13,6 +13,8 @@ import LogisticsJobCreation from './pages/supplier/LogisticsJobCreation';
 import SupplierNegotiation from './pages/negotiation/SupplierNegotiation';
 import OfferSummary from './pages/negotiation/OfferSummary';
 import SupplierLogisticsJobManagement from './pages/supplier/SupplierLogisticsJobManagement';
+import SupplierInvoiceCreation from './pages/supplier/SupplierInvoiceCreation';
+import SupplierInvoicePreview from './pages/supplier/SupplierInvoicePreview';
 import BuyerDashboard from './pages/buyer/BuyerDashboard';
 import BuyerProfile from './pages/buyer/BuyerProfile';
 import SearchProducts from './pages/buyer/SearchProducts';
@@ -56,6 +58,9 @@ function App() {
         <Route path="/supplier/logistics-job-management/:userId" element={<SupplierLogisticsJobManagement />} />
         <Route path="/supplier/negotiation/:userId" element={<SupplierNegotiation />} />
         <Route path="/negotiation/offer-summary/:userId" element={<OfferSummary />} />
+        <Route path="/supplier/invoice/create/:orderId" element={<SupplierInvoiceCreation />} />
+        <Route path="/supplier/invoice/edit/:invoiceId" element={<SupplierInvoiceCreation />} />
+        <Route path="/supplier/invoice/preview/:invoiceId" element={<SupplierInvoicePreview />} />
 
         {/* Buyer Routes */}
         {/* Buyer Routes */}
@@ -65,7 +70,7 @@ function App() {
         <Route path="/buyer/search/:userId" element={<SearchProducts />} />
         <Route path="/buyer/negotiation/:userId" element={<Negotiation />} />
         <Route path="/buyer/offer-summary/:userId" element={<BuyerOfferSummary />} />
-        <Route path="/buyer/invoice-preview/:userId" element={<InvoicePreview />} />
+        <Route path="/buyer/invoice-preview/:userId/:invoiceId" element={<InvoicePreview />} />
         <Route path="/buyer/orders/:userId" element={<BuyerOrders />} />
         <Route path="/buyer/orders" element={<BuyerOrders />} /> {/* Fallback */}
         <Route path="/buyer/logistics-jobs/:userId" element={<BuyerLogisticsJobCreation />} />

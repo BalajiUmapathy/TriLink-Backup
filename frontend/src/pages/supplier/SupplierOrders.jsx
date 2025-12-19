@@ -11,6 +11,7 @@ const SupplierOrders = () => {
     // Mock Data for Orders
     const [activeOrders, setActiveOrders] = useState([]);
     const [orderHistory, setOrderHistory] = useState([]);
+    const [invoiceStatus, setInvoiceStatus] = useState({}); // Map of orderId -> invoice status
 
     // Negotiation requests (Keep as is or fetch separately if needed, focused on Orders now)
     const requests = [
@@ -41,8 +42,14 @@ const SupplierOrders = () => {
                         amount: `₹${order.finalPrice}`
                     }));
 
-                    setActiveOrders(mappedOrders.filter(o => o.status !== 'Completed' && o.status !== 'Cancelled'));
-                    setOrderHistory(mappedOrders.filter(o => o.status === 'Completed' || o.status === 'Cancelled'));
+                    const activeOrdrs = mappedOrders.filter(o => o.status !== 'Completed' && o.status !== 'Cancelled');
+                    const historyOrders = mappedOrders.filter(o => o.status === 'Completed' || o.status === 'Cancelled');
+
+                    setActiveOrders(activeOrdrs);
+                    setOrderHistory(historyOrders);
+
+                    // Fetch invoice status for history orders
+                    await fetchInvoiceStatus(historyOrders);
                 }
             } catch (error) {
                 console.error("Failed to fetch orders:", error);
@@ -51,6 +58,38 @@ const SupplierOrders = () => {
 
         fetchOrders();
     }, [location.key]); // Re-fetch on navigation/mount
+
+    const fetchInvoiceStatus = async (orders) => {
+        try {
+            const token = localStorage.getItem('token');
+            const statusMap = {};
+
+            for (const order of orders) {
+                try {
+                    const response = await fetch(`http://localhost:5081/api/invoice/order/${order.id}`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+
+                    if (response.ok) {
+                        const invoice = await response.json();
+                        statusMap[order.id] = {
+                            exists: true,
+                            invoiceId: invoice.id,
+                            status: invoice.status // Draft or Finalized
+                        };
+                    } else {
+                        statusMap[order.id] = { exists: false };
+                    }
+                } catch {
+                    statusMap[order.id] = { exists: false };
+                }
+            }
+
+            setInvoiceStatus(statusMap);
+        } catch (error) {
+            console.error("Failed to fetch invoice status:", error);
+        }
+    };
 
 
 
@@ -378,6 +417,7 @@ const SupplierOrders = () => {
                                     <th style={{ padding: '1rem 1.5rem', textAlign: 'left', fontWeight: '600' }}>Date</th>
                                     <th style={{ padding: '1rem 1.5rem', textAlign: 'left', fontWeight: '600' }}>Status</th>
                                     <th style={{ padding: '1rem 1.5rem', textAlign: 'right', fontWeight: '600' }}>Amount</th>
+                                    <th style={{ padding: '1rem 1.5rem', textAlign: 'right', fontWeight: '600' }}>Invoice</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -397,6 +437,35 @@ const SupplierOrders = () => {
                                             </span>
                                         </td>
                                         <td style={{ padding: '1rem 1.5rem', textAlign: 'right', fontWeight: '500' }}>{order.amount}</td>
+                                        <td style={{ padding: '1rem 1.5rem', textAlign: 'right' }}>
+                                            {invoiceStatus[order.id]?.exists ? (
+                                                invoiceStatus[order.id].status === 'Draft' ? (
+                                                    <button
+                                                        onClick={() => navigate(`/supplier/invoice/edit/${invoiceStatus[order.id].invoiceId}`)}
+                                                        className="btn"
+                                                        style={{ padding: '0.4rem 0.8rem', fontSize: '0.85rem', background: 'white', border: '1px solid var(--border)' }}
+                                                    >
+                                                        Edit Invoice
+                                                    </button>
+                                                ) : (
+                                                    <button
+                                                        onClick={() => navigate(`/supplier/invoice/preview/${invoiceStatus[order.id].invoiceId}`)}
+                                                        className="btn"
+                                                        style={{ padding: '0.4rem 0.8rem', fontSize: '0.85rem', background: 'white', border: '1px solid var(--border)' }}
+                                                    >
+                                                        View Invoice
+                                                    </button>
+                                                )
+                                            ) : (
+                                                <button
+                                                    onClick={() => navigate(`/supplier/invoice/create/${order.id}`)}
+                                                    className="btn btn-primary"
+                                                    style={{ padding: '0.4rem 0.8rem', fontSize: '0.85rem' }}
+                                                >
+                                                    Generate Invoice
+                                                </button>
+                                            )}
+                                        </td>
                                     </tr>
                                 ))}
                             </tbody>

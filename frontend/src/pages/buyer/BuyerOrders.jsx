@@ -11,6 +11,7 @@ const BuyerOrders = () => {
 
     const [activeOrders, setActiveOrders] = useState([]);
     const [orderHistory, setOrderHistory] = useState([]);
+    const [invoiceStatus, setInvoiceStatus] = useState({}); // Map of orderId -> invoice info
 
     useEffect(() => {
         const fetchOrders = async () => {
@@ -31,12 +32,50 @@ const BuyerOrders = () => {
                         invoiceAvailable: order.status === 'Completed'
                     }));
 
-                    setActiveOrders(mappedOrders.filter(o => o.status !== 'Completed' && o.status !== 'Cancelled'));
-                    setOrderHistory(mappedOrders.filter(o => o.status === 'Completed' || o.status === 'Cancelled'));
+                    const activeOrdrs = mappedOrders.filter(o => o.status !== 'Completed' && o.status !== 'Cancelled');
+                    const historyOrders = mappedOrders.filter(o => o.status === 'Completed' || o.status === 'Cancelled');
+
+                    setActiveOrders(activeOrdrs);
+                    setOrderHistory(historyOrders);
+
+                    // Fetch invoice data for completed orders
+                    await fetchInvoiceStatus(historyOrders);
                 }
 
             } catch (error) {
                 console.error("Failed to fetch orders", error);
+            }
+        };
+
+        const fetchInvoiceStatus = async (orders) => {
+            try {
+                const token = localStorage.getItem('token');
+                const statusMap = {};
+
+                for (const order of orders) {
+                    try {
+                        const response = await fetch(`http://localhost:5081/api/invoice/order/${order.id}`, {
+                            headers: { 'Authorization': `Bearer ${token}` }
+                        });
+
+                        if (response.ok) {
+                            const invoice = await response.json();
+                            statusMap[order.id] = {
+                                exists: true,
+                                invoiceId: invoice.id,
+                                status: invoice.status
+                            };
+                        } else {
+                            statusMap[order.id] = { exists: false };
+                        }
+                    } catch {
+                        statusMap[order.id] = { exists: false };
+                    }
+                }
+
+                setInvoiceStatus(statusMap);
+            } catch (error) {
+                console.error("Failed to fetch invoice status:", error);
             }
         };
         fetchOrders();
@@ -166,12 +205,17 @@ const BuyerOrders = () => {
                                         ) : (
                                             <button
                                                 onClick={() => {
-                                                    if (order.invoiceAvailable) navigate('/buyer/invoice-preview');
-                                                    else alert('Viewing Order Details...');
+                                                    const invoiceInfo = invoiceStatus[order.id];
+                                                    if (invoiceInfo?.exists) {
+                                                        const userId = localStorage.getItem('userId');
+                                                        navigate(`/buyer/invoice-preview/${userId}/${invoiceInfo.invoiceId}`);
+                                                    } else {
+                                                        alert('No invoice available for this order yet.');
+                                                    }
                                                 }}
                                                 style={{ background: 'white', border: '1px solid var(--border)', padding: '0.5rem 1rem', borderRadius: '6px', fontSize: '0.85rem', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}
                                             >
-                                                {order.invoiceAvailable ? <><FileText size={14} /> View Invoice</> : 'View Details'}
+                                                {invoiceStatus[order.id]?.exists ? <><FileText size={14} /> View Invoice</> : 'View Details'}
                                             </button>
                                         )}
                                     </td>

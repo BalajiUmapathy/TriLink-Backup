@@ -83,6 +83,21 @@ namespace Backend.Mappings
                 .ForMember(dest => dest.JobIsFragile, opt => opt.MapFrom(src => src.Job != null ? src.Job.IsFragile : false))
                 .ForMember(dest => dest.JobIsHighValue, opt => opt.MapFrom(src => src.Job != null ? src.Job.IsHighValue : false));
 
+            // Invoice mappings
+            CreateMap<Invoice, InvoiceDto>()
+                .ForMember(dest => dest.ProductName, opt => opt.MapFrom(src => src.Order != null && src.Order.Product != null ? src.Order.Product.Name : null))
+                .ForMember(dest => dest.Quantity, opt => opt.MapFrom(src => src.Order != null && src.Order.Product != null ? src.Order.Product.Quantity : 0))
+                .ForMember(dest => dest.Unit, opt => opt.MapFrom(src => src.Order != null && src.Order.Product != null ? src.Order.Product.Unit : null))
+                .ForMember(dest => dest.SupplierName, opt => opt.MapFrom(src => src.Supplier != null ? src.Supplier.Username : null))
+                .ForMember(dest => dest.SupplierCompanyName, opt => opt.MapFrom(src => src.Supplier != null ? src.Supplier.CompanyName : null))
+                .ForMember(dest => dest.SupplierGSTNumber, opt => opt.MapFrom(src => src.Supplier != null ? src.Supplier.GSTNumber : null))
+                .ForMember(dest => dest.SupplierAddress, opt => opt.MapFrom(src => src.Supplier != null ? src.Supplier.Address : null))
+                .ForMember(dest => dest.SupplierContactNumber, opt => opt.MapFrom(src => src.Supplier != null ? src.Supplier.ContactNumber : null))
+                .ForMember(dest => dest.BuyerName, opt => opt.MapFrom(src => src.Buyer != null ? src.Buyer.Username : null))
+                .ForMember(dest => dest.BuyerCompanyName, opt => opt.MapFrom(src => src.Buyer != null ? src.Buyer.CompanyName : null))
+                .ForMember(dest => dest.BuyerGSTNumber, opt => opt.MapFrom(src => src.Buyer != null ? src.Buyer.GSTNumber : null))
+                .ForMember(dest => dest.BuyerAddress, opt => opt.MapFrom(src => src.Buyer != null ? src.Buyer.Address : null));
+
         }
     }
 }

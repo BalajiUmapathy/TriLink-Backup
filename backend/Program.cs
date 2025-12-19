@@ -59,12 +59,16 @@ builder.Services.AddScoped<IProductRepository, ProductRepository>();
 builder.Services.AddScoped<INegotiationRepository, NegotiationRepository>();
 builder.Services.AddScoped<ILogisticsRepository, LogisticsRepository>();
 builder.Services.AddScoped<IOrderRepository, OrderRepository>();
+builder.Services.AddScoped<IInvoiceRepository, InvoiceRepository>();
 builder.Services.AddScoped<ITokenRepository, TokenRepository>();
+builder.Services.AddScoped<IJobHistoryRepository, JobHistoryRepository>();
 
 // Register services for logistics route planning
-builder.Services.AddScoped<IRouteService, RouteService>();
+builder.Services.AddHttpClient(); // Required for HTTP calls
+builder.Services.AddScoped<IGoogleMapsService, GoogleMapsService>(); // Google Maps API service
+builder.Services.AddScoped<IRouteService, RouteService>(); // Route planning service (uses Google Maps)
 builder.Services.AddScoped<IAIService, AIService>();
-builder.Services.AddHttpClient(); // Required for RouteService to make HTTP calls
+builder.Services.AddScoped<ITransportCostService, TransportCostService>();
 
 builder.Services.AddAutoMapper(typeof(AutoMapperProfile));
 

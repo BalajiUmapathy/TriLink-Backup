@@ -5,6 +5,7 @@ using AutoMapper;
 using Backend.Data;
 using Backend.Models.Domain;
 using Backend.Models.DTO;
+using Backend.Repositories;
 using System.Security.Claims;
 
 namespace Backend.Controllers
@@ -16,11 +17,13 @@ namespace Backend.Controllers
     {
         private readonly TriLinkDbContext _context;
         private readonly IMapper _mapper;
+        private readonly IJobHistoryRepository _jobHistoryRepository;
 
-        public BuyerLogisticsJobController(TriLinkDbContext context, IMapper mapper)
+        public BuyerLogisticsJobController(TriLinkDbContext context, IMapper mapper, IJobHistoryRepository jobHistoryRepository)
         {
             _context = context;
             _mapper = mapper;
+            _jobHistoryRepository = jobHistoryRepository;
         }
 
 
@@ -106,6 +109,13 @@ namespace Backend.Controllers
             job.Id = Guid.NewGuid();
             job.BuyerId = userId;
             job.CreatedAt = DateTime.UtcNow;
+            
+            // Initialize route planning fields with empty strings (populated later during route planning)
+            job.PlannedDistance = "";
+            job.PlannedDuration = "";
+            job.PlannedDriverExperience = "";
+            job.PlannedVehicleType = "";
+            job.RoutePolyline = "";
 
             _context.BuyerLogisticsJobs.Add(job);
             await _context.SaveChangesAsync();
@@ -312,7 +322,67 @@ namespace Backend.Controllers
             job.Status = newStatus;
             await _context.SaveChangesAsync();
 
+            // If job is marked as Delivered, auto-create job history entry
+            if (newStatus == "Delivered")
+            {
+                // Check if history already exists
+                var exists = await _jobHistoryRepository.ExistsAsync(job.Id);
+                if (!exists)
+                {
+                    var jobHistory = new JobHistory
+                    {
+                        Id = Guid.NewGuid(),
+                        JobId = job.Id,
+                        LogisticsProviderId = userId,
+                        PlannedDistance = job.PlannedDistance ?? "N/A",
+                        PlannedDuration = job.PlannedDuration ?? "N/A",
+                        DriverExperience = job.PlannedDriverExperience ?? "-",
+                        VehicleType = job.PlannedVehicleType ?? "-",
+                        CompletedDate = DateTime.UtcNow,
+                        Status = "Delivered",
+                        CreatedAt = DateTime.UtcNow
+                    };
+                    await _jobHistoryRepository.CreateAsync(jobHistory);
+                }
+            }
+
             return Ok(new { message = "Job status updated successfully" });
+        }
+
+        // POST: api/BuyerLogisticsJob/{id}/route
+        [HttpPost("{id}/route")]
+        public async Task<IActionResult> SaveRouteData(Guid id, [FromBody] SaveRouteDataDto routeData)
+        {
+            var userIdClaim = User.Claims.FirstOrDefault(c => c.Type == "id")?.Value;
+            if (string.IsNullOrEmpty(userIdClaim) || !Guid.TryParse(userIdClaim, out Guid userId))
+            {
+                return Unauthorized("User ID not found in token");
+            }
+
+            var job = await _context.BuyerLogisticsJobs
+                .Include(j => j.Quotes)
+                .FirstOrDefaultAsync(j => j.Id == id);
+
+            if (job == null) return NotFound("Job not found");
+
+            // Verify the provider is authorized (has a quote for this job)
+            var hasQuote = job.Quotes.Any(q => q.LogisticsProviderId == userId);
+            if (!hasQuote)
+            {
+                return Unauthorized("You are not authorized to update this job.");
+            }
+
+            // Save route planning data
+            job.PlannedDistance = routeData.Distance;
+            job.PlannedDuration = routeData.Duration;
+            job.PlannedDriverExperience = routeData.DriverExperience;
+            job.PlannedVehicleType = routeData.VehicleType;
+            job.RoutePolyline = routeData.Polyline;
+            job.RoutePlannedAt = DateTime.UtcNow;
+
+            await _context.SaveChangesAsync();
+
+            return Ok(new { message = "Route data saved successfully" });
         }
     }
 }

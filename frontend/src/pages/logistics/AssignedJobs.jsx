@@ -22,33 +22,7 @@ const AssignedJobs = () => {
             if (response.ok) {
                 const data = await response.json();
                 setAssignedJobs(data);
-
-                // Auto-save any Delivered/Completed jobs to Job History
-                const existingHistory = JSON.parse(localStorage.getItem('jobHistory') || '[]');
-                const deliveredJobs = data.filter(job => job.status === 'Delivered' || job.status === 'Completed');
-
-                deliveredJobs.forEach(job => {
-                    console.log('[DEBUG] Job data for history:', job);
-                    console.log('[DEBUG] pickupCity:', job.pickupCity, '| dropCity:', job.dropCity);
-                    const jobExists = existingHistory.some(h => h.id === job.id);
-                    if (!jobExists) {
-                        const historyEntry = {
-                            id: job.id,
-                            origin: job.pickupCity || 'Unknown',
-                            destination: job.dropCity || 'Unknown',
-                            status: job.status,
-                            date: new Date().toLocaleDateString(),
-                            driverExp: '-',
-                            vehicleType: '-',
-                            distance: 'N/A'
-                        };
-                        existingHistory.push(historyEntry);
-                    }
-                });
-
-                if (deliveredJobs.length > 0) {
-                    localStorage.setItem('jobHistory', JSON.stringify(existingHistory));
-                }
+                // Job history is now automatically created by backend when status = "Delivered"
             }
         } catch (error) {
             console.error(error);
@@ -70,30 +44,7 @@ const AssignedJobs = () => {
             });
 
             if (response.ok) {
-                // If status is Delivered, add to Job History
-                if (newStatus === 'Delivered') {
-                    const jobToSave = assignedJobs.find(j => j.id === jobId);
-                    if (jobToSave) {
-                        const historyEntry = {
-                            id: jobToSave.id,
-                            origin: jobToSave.pickupCity || 'Unknown',
-                            destination: jobToSave.dropCity || 'Unknown',
-                            status: 'Delivered',
-                            date: new Date().toLocaleDateString(),
-                            driverExp: '-',
-                            vehicleType: '-',
-                            distance: 'N/A'
-                        };
-
-                        const existingHistory = JSON.parse(localStorage.getItem('jobHistory') || '[]');
-                        const jobExists = existingHistory.some(h => h.id === jobToSave.id);
-                        if (!jobExists) {
-                            existingHistory.push(historyEntry);
-                            localStorage.setItem('jobHistory', JSON.stringify(existingHistory));
-                        }
-                    }
-                }
-
+                // Backend automatically creates job history when status = "Delivered"
                 fetchAssignedJobs(); // Refresh list
                 if (selectedJob && selectedJob.id === jobId) {
                     setSelectedJob({ ...selectedJob, status: newStatus });

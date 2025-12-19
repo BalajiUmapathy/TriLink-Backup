@@ -64,6 +64,14 @@ namespace Backend.Models.Domain
         public ICollection<BuyerLogisticsJobQuote> Quotes { get; set; }
         public DateTime? UpdatedAt { get; set; }
         
+        // Route Planning Data (saved when route is finalized)
+        public string PlannedDistance { get; set; }
+        public string PlannedDuration { get; set; }
+        public string PlannedDriverExperience { get; set; }
+        public string PlannedVehicleType { get; set; }
+        public DateTime? RoutePlannedAt { get; set; }
+        public string RoutePolyline { get; set; } // Encoded polyline for map display
+        
         // Computed properties for display
         public string PickupLocation => $"{PickupCity}, {PickupState}";
         public string DropLocation => $"{DropCity}, {DropState}";

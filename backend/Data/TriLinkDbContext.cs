@@ -14,9 +14,12 @@ namespace Backend.Data
         public DbSet<Negotiation> Negotiations { get; set; }
         public DbSet<Offer> Offers { get; set; }
         public DbSet<Order> Orders { get; set; }
+        public DbSet<Invoice> Invoices { get; set; }
         public DbSet<LogisticsEntry> LogisticsEntries { get; set; }
         public DbSet<BuyerLogisticsJob> BuyerLogisticsJobs { get; set; }
         public DbSet<BuyerLogisticsJobQuote> BuyerLogisticsJobQuotes { get; set; }
+        public DbSet<JobHistory> JobHistories { get; set; }
+
 
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -107,6 +110,41 @@ namespace Backend.Data
             modelBuilder.Entity<BuyerLogisticsJob>().Property(b => b.Length).HasColumnType("decimal(18,2)");
             modelBuilder.Entity<BuyerLogisticsJob>().Property(b => b.Width).HasColumnType("decimal(18,2)");
             modelBuilder.Entity<BuyerLogisticsJob>().Property(b => b.Height).HasColumnType("decimal(18,2)");
+            
+            // Configure Invoice relationships
+            modelBuilder.Entity<Invoice>()
+                .HasOne(i => i.Order)
+                .WithMany()
+                .HasForeignKey(i => i.OrderId)
+                .OnDelete(DeleteBehavior.Restrict);
+                
+            modelBuilder.Entity<Invoice>()
+                .HasOne(i => i.Supplier)
+                .WithMany()
+                .HasForeignKey(i => i.SupplierId)
+                .OnDelete(DeleteBehavior.Restrict);
+                
+            modelBuilder.Entity<Invoice>()
+                .HasOne(i => i.Buyer)
+                .WithMany()
+                .HasForeignKey(i => i.BuyerId)
+                .OnDelete(DeleteBehavior.Restrict);
+                
+            // Configure Invoice decimal precision
+            modelBuilder.Entity<Invoice>().Property(i => i.SubTotal).HasColumnType("decimal(18,2)");
+            modelBuilder.Entity<Invoice>().Property(i => i.TaxRate).HasColumnType("decimal(5,2)");
+            modelBuilder.Entity<Invoice>().Property(i => i.TaxAmount).HasColumnType("decimal(18,2)");
+            modelBuilder.Entity<Invoice>().Property(i => i.TotalAmount).HasColumnType("decimal(18,2)");
+            
+            // Configure JobHistory relationships
+            modelBuilder.Entity<JobHistory>()
+                .HasOne(jh => jh.Job)
+                .WithMany()
+                .HasForeignKey(jh => jh.JobId)
+                .OnDelete(DeleteBehavior.Restrict);
+                
+            modelBuilder.Entity<JobHistory>()
+                .HasIndex(jh => jh.LogisticsProviderId);
         }
     }
 }

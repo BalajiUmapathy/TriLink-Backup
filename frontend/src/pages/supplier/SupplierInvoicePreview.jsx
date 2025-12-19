@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Bell, User, ArrowLeft, Download, Printer } from 'lucide-react';
+import { Bell, User, ArrowLeft, Download, Edit, CheckCircle, Printer } from 'lucide-react';
 import html2pdf from 'html2pdf.js';
 import '../../index.css';
 
-const InvoicePreview = () => {
+const SupplierInvoicePreview = () => {
     const navigate = useNavigate();
-    const { invoiceId, userId } = useParams();
+    const { invoiceId } = useParams();
     const [invoice, setInvoice] = useState(null);
     const [loading, setLoading] = useState(true);
 
@@ -17,17 +17,23 @@ const InvoicePreview = () => {
         const style = document.createElement('style');
         style.textContent = `
             @media print {
+                /* Hide everything except invoice */
                 nav, .no-print {
                     display: none !important;
                 }
+                
+                /* Reset page margins */
                 @page {
                     margin: 0.5cm;
                     size: A4;
                 }
-               body {
+                
+                body {
                     margin: 0;
                     padding: 0;
                 }
+                
+                /* Make invoice fit on one page */
                 .invoice-container {
                     max-width: 100% !important;
                     padding: 1rem !important;
@@ -36,17 +42,23 @@ const InvoicePreview = () => {
                     transform: scale(0.95);
                     transform-origin: top left;
                 }
+                
+                /* Reduce spacing for print */
                 .invoice-container h2 {
                     font-size: 1.75rem !important;
                     margin-bottom: 0.25rem !important;
                 }
+                
                 .invoice-container > div {
                     margin-bottom: 1rem !important;
                 }
+                
+                /* Compact table */
                 table {
                     font-size: 0.85rem !important;
                 }
-                table th, table td {
+                
+               table th, table td {
                     padding: 0.5rem !important;
                 }
             }
@@ -68,13 +80,42 @@ const InvoicePreview = () => {
                 setInvoice(data);
             } else {
                 alert('Failed to load invoice');
-                navigate(`/buyer/orders/${userId}`);
+                const userId = localStorage.getItem('userId');
+                navigate(`/supplier/orders/${userId}`);
             }
             setLoading(false);
         } catch (error) {
             console.error('Error fetching invoice:', error);
             alert('Error loading invoice');
             setLoading(false);
+        }
+    };
+
+    const handleFinalize = async () => {
+        if (!confirm('Are you sure you want to finalize this invoice? Once finalized, it cannot be edited.')) {
+            return;
+        }
+
+        try {
+            const token = localStorage.getItem('token');
+            const response = await fetch(`http://localhost:5081/api/invoice/${invoiceId}/finalize`, {
+                method: 'PUT',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (response.ok) {
+                alert('Invoice finalized successfully!');
+                fetchInvoice(); // Refresh invoice data
+            } else {
+                const error = await response.json();
+                alert(`Failed to finalize invoice: ${error.message || 'Unknown error'}`);
+            }
+        } catch (error) {
+            console.error('Error finalizing invoice:', error);
+            alert('Error finalizing invoice');
         }
     };
 
@@ -109,33 +150,70 @@ const InvoicePreview = () => {
                 <div style={{ display: 'flex', alignItems: 'center', gap: '3rem' }}>
                     <div style={{ fontSize: '1.5rem', fontWeight: '700', color: 'var(--text-main)' }}>TriLink</div>
                     <div style={{ display: 'flex', gap: '2rem', fontSize: '0.95rem', fontWeight: '500' }}>
-                        <a href="#" onClick={() => { const userId = localStorage.getItem('userId'); navigate(`/buyer/dashboard/${userId}`); }} style={{ color: 'var(--text-muted)', cursor: 'pointer' }}>Dashboard</a>
-                        <a href="#" onClick={() => { const userId = localStorage.getItem('userId'); navigate(`/buyer/search/${userId}`); }} style={{ color: 'var(--text-muted)', cursor: 'pointer' }}>Search Products</a>
-                        <a href="#" onClick={() => { const userId = localStorage.getItem('userId'); navigate(`/buyer/orders/${userId}`); }} style={{ color: 'var(--text-main)', cursor: 'pointer' }}>Orders</a>
+                        <a href="#" onClick={() => { const userId = localStorage.getItem('userId'); navigate(`/supplier/dashboard/${userId}`); }} style={{ color: 'var(--text-muted)', cursor: 'pointer' }}>Dashboard</a>
+                        <a href="#" onClick={() => { const userId = localStorage.getItem('userId'); navigate(`/supplier/products/${userId}`); }} style={{ color: 'var(--text-muted)', cursor: 'pointer' }}>Products</a>
+                        <a href="#" onClick={() => { const userId = localStorage.getItem('userId'); navigate(`/supplier/orders/${userId}`); }} style={{ color: 'var(--text-main)', cursor: 'pointer' }}>Orders</a>
                     </div>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
                     <Bell size={20} color="var(--text-muted)" />
                     <div style={{ width: '32px', height: '32px', background: '#e2e8f0', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
-                        onClick={() => { const userId = localStorage.getItem('userId'); navigate(`/buyer/profile/${userId}`); }}>
+                        onClick={() => { const userId = localStorage.getItem('userId'); navigate(`/supplier/profile/${userId}`); }}>
                         <User size={18} color="var(--text-muted)" />
                     </div>
                 </div>
             </nav>
 
             <main className="container" style={{ padding: '3rem 1rem', maxWidth: '900px', margin: '0 auto' }}>
-                {/* Header with Download Button */}
+                {/* Header with Actions */}
                 <div className="no-print" style={{ marginBottom: '2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <div>
-                        <button onClick={() => navigate(`/buyer/orders/${userId}`)}
+                        <button onClick={() => { const userId = localStorage.getItem('userId'); navigate(`/supplier/orders/${userId}`); }}
                             style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', marginBottom: '1rem' }}>
                             <ArrowLeft size={18} />
                             Back to Orders
                         </button>
-                        <h1 style={{ fontSize: '2rem', fontWeight: '600', marginBottom: '0.5rem' }}>Invoice</h1>
-                        <span style={{ color: 'var(--text-muted)' }}>Invoice #{invoice.invoiceNumber}</span>
+                        <h1 style={{ fontSize: '2rem', fontWeight: '600', marginBottom: '0.5rem' }}>Invoice Preview</h1>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                            <span style={{ color: 'var(--text-muted)' }}>Invoice #{invoice.invoiceNumber}</span>
+                            <span style={{
+                                background: invoice.status === 'Finalized' ? '#dcfce7' : '#fef3c7',
+                                color: invoice.status === 'Finalized' ? '#15803d' : '#b45309',
+                                padding: '0.25rem 0.75rem',
+                                borderRadius: '20px',
+                                fontSize: '0.85rem',
+                                fontWeight: '600',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '0.4rem'
+                            }}>
+                                {invoice.status === 'Finalized' && <CheckCircle size={14} />}
+                                {invoice.status}
+                            </span>
+                        </div>
                     </div>
                     <div style={{ display: 'flex', gap: '1rem' }}>
+                        {invoice.status === 'Draft' && (
+                            <>
+                                <button
+                                    onClick={() => navigate(`/supplier/invoice/edit/${invoiceId}`)}
+                                    className="btn"
+                                    style={{ padding: '0.75rem 1.5rem', background: 'white', border: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+                                >
+                                    <Edit size={18} />
+                                    Edit Invoice
+                                </button>
+                                <button
+                                    onClick={handleFinalize}
+                                    className="btn btn-primary"
+                                    style={{ padding: '0.75rem 1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+                                >
+                                    <CheckCircle size={18} />
+                                    Finalize Invoice
+                                </button>
+                            </>
+                        )}
+                        {/* Download and Print buttons */}
                         <button
                             onClick={handleDownload}
                             className="btn btn-primary"
@@ -243,7 +321,7 @@ const InvoicePreview = () => {
                     {/* Notes */}
                     {invoice.notes && (
                         <div style={{ background: '#f8fafc', padding: '1.5rem', borderRadius: '8px', marginTop: '2rem' }}>
-                            <h3 style={{ fontSize: '0.9rem', fontWeight: '600', marginBottom: '0.75rem' }}>Payment Terms & Notes</h3>
+                            <h3 style={{ fontSize: '0.9rem', fontWeight: '600', marginBottom: '0.75rem' }}>Notes / Terms & Conditions</h3>
                             <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', lineHeight: '1.6', whiteSpace: 'pre-wrap' }}>{invoice.notes}</p>
                         </div>
                     )}
@@ -259,4 +337,4 @@ const InvoicePreview = () => {
     );
 };
 
-export default InvoicePreview;
+export default SupplierInvoicePreview;

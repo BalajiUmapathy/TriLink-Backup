@@ -77,15 +77,22 @@ const RouteSuggestion = () => {
     const handleSuggest = async () => {
         setIsLoading(true);
         try {
-            // Use real origin and destination cities from job data
+            // Use real origin and destination cities from job data with cargo details
             const response = await fetch('http://localhost:5081/api/Logistics/suggest-route', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    origin: jobData.pickupLocation, // Use full address for better accuracy
+                    origin: jobData.pickupLocation,
                     destination: jobData.deliveryLocation,
-                    originCity: jobData.origin, // Backup: Use City name if full address fails
-                    destinationCity: jobData.destination // Backup
+                    originCity: jobData.origin,
+                    destinationCity: jobData.destination,
+                    // Pass cargo details for accurate cost calculation
+                    totalWeight: jobData.totalWeight || 1000,
+                    length: jobData.length,
+                    width: jobData.width,
+                    height: jobData.height,
+                    isFragile: jobData.isFragile || false,
+                    isHighValue: jobData.isHighValue || false
                 })
             });
             if (!response.ok) {
@@ -95,7 +102,7 @@ const RouteSuggestion = () => {
             const data = await response.json();
             setSuggestedRouteData(data);
             setShowComparison(true);
-            setSelectedRoute('optimal'); // Auto-select optimal
+            setSelectedRoute('optimal');
         } catch (error) {
             console.error("Failed to fetch route", error);
             alert(`Failed to fetch route suggestions: ${error.message}`);
@@ -235,6 +242,7 @@ const RouteSuggestion = () => {
                                     routeGeometry={suggestedRouteData?.routeGeometry}
                                     originCoords={suggestedRouteData?.originCoords}
                                     destinationCoords={suggestedRouteData?.destinationCoords}
+                                    costBreakdown={suggestedRouteData?.costBreakdown}
                                 />
                             </div>
                         </div>
@@ -312,7 +320,7 @@ const StatPlaceholder = ({ label, icon }) => (
     </div>
 );
 
-const RouteCard = ({ title, tag, tagColor, selected, onClick, stats, details, routeGeometry, originCoords, destinationCoords }) => {
+const RouteCard = ({ title, tag, tagColor, selected, onClick, stats, details, routeGeometry, originCoords, destinationCoords, costBreakdown }) => {
     let positions = [];
     let isFallback = false;
 
@@ -385,7 +393,7 @@ const RouteCard = ({ title, tag, tagColor, selected, onClick, stats, details, ro
                     <div style={{ fontWeight: '500' }}>{stats.time}</div>
                 </div>
                 <div>
-                    <span style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>Fuel Cost</span>
+                    <span style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>Total Cost</span>
                     <div style={{ fontWeight: '500' }}>{stats.cost}</div>
                 </div>
             </div>
@@ -400,6 +408,56 @@ const RouteCard = ({ title, tag, tagColor, selected, onClick, stats, details, ro
                     <div style={{ fontWeight: '500' }}>{stats.vehicle}</div>
                 </div>
             </div>
+
+            {/* Cost Breakdown Section */}
+            {costBreakdown && (
+                <div style={{
+                    marginTop: '1rem',
+                    padding: '1rem',
+                    background: '#f8fafc',
+                    borderRadius: '8px',
+                    fontSize: '0.85rem'
+                }}>
+                    <div style={{ fontWeight: '600', marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <Truck size={16} /> Cost Breakdown
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: '0.4rem' }}>
+                        <div style={{ color: 'var(--text-muted)' }}>Fuel ({costBreakdown.fuelLiters}L)</div>
+                        <div style={{ textAlign: 'right', fontWeight: '500' }}>₹{costBreakdown.fuelCost?.toLocaleString()}</div>
+
+                        <div style={{ color: 'var(--text-muted)' }}>Driver Wages</div>
+                        <div style={{ textAlign: 'right', fontWeight: '500' }}>₹{costBreakdown.driverCost?.toLocaleString()}</div>
+
+                        <div style={{ color: 'var(--text-muted)' }}>Toll Charges</div>
+                        <div style={{ textAlign: 'right', fontWeight: '500' }}>₹{costBreakdown.tollCost?.toLocaleString()}</div>
+
+                        <div style={{ color: 'var(--text-muted)' }}>Maintenance</div>
+                        <div style={{ textAlign: 'right', fontWeight: '500' }}>₹{costBreakdown.maintenanceCost?.toLocaleString()}</div>
+
+                        <div style={{ color: 'var(--text-muted)' }}>Insurance</div>
+                        <div style={{ textAlign: 'right', fontWeight: '500' }}>₹{costBreakdown.insuranceCost?.toLocaleString()}</div>
+
+                        <div style={{ color: 'var(--text-muted)' }}>Overhead</div>
+                        <div style={{ textAlign: 'right', fontWeight: '500' }}>₹{costBreakdown.overheadCost?.toLocaleString()}</div>
+                    </div>
+                    <div style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        marginTop: '0.75rem',
+                        paddingTop: '0.75rem',
+                        borderTop: '1px solid #e2e8f0',
+                        fontWeight: '600'
+                    }}>
+                        <span>Total</span>
+                        <span style={{ color: '#10b981' }}>₹{costBreakdown.totalCost?.toLocaleString()}</span>
+                    </div>
+                    {costBreakdown.chargeableWeightKg > 0 && (
+                        <div style={{ marginTop: '0.5rem', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                            Chargeable Weight: {costBreakdown.chargeableWeightKg?.toLocaleString()} kg | Terrain: {costBreakdown.terrainType}
+                        </div>
+                    )}
+                </div>
+            )}
 
             <div style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid var(--border)', fontSize: '0.8rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                 {details}

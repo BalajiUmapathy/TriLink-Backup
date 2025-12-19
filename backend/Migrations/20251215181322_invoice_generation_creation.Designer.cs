@@ -4,6 +4,7 @@ using Backend.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Backend.Migrations
 {
     [DbContext(typeof(TriLinkDbContext))]
-    partial class TriLinkDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251215181322_invoice_generation_creation")]
+    partial class invoice_generation_creation
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -128,29 +131,6 @@ namespace Backend.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("PickupTimeSlot")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("PlannedDistance")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("PlannedDriverExperience")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("PlannedDuration")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("PlannedVehicleType")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime?>("RoutePlannedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("RoutePolyline")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
@@ -291,53 +271,6 @@ namespace Backend.Migrations
                     b.HasIndex("SupplierId");
 
                     b.ToTable("Invoices");
-                });
-
-            modelBuilder.Entity("Backend.Models.Domain.JobHistory", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<DateTime>("CompletedDate")
-                        .HasColumnType("datetime2");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("DriverExperience")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<Guid>("JobId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<Guid>("LogisticsProviderId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("PlannedDistance")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("PlannedDuration")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("VehicleType")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("JobId");
-
-                    b.HasIndex("LogisticsProviderId");
-
-                    b.ToTable("JobHistories");
                 });
 
             modelBuilder.Entity("Backend.Models.Domain.LogisticsEntry", b =>
@@ -646,17 +579,6 @@ namespace Backend.Migrations
                     b.Navigation("Order");
 
                     b.Navigation("Supplier");
-                });
-
-            modelBuilder.Entity("Backend.Models.Domain.JobHistory", b =>
-                {
-                    b.HasOne("Backend.Models.Domain.BuyerLogisticsJob", "Job")
-                        .WithMany()
-                        .HasForeignKey("JobId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("Job");
                 });
 
             modelBuilder.Entity("Backend.Models.Domain.LogisticsEntry", b =>
